@@ -4,11 +4,14 @@ import { FaceDetection } from "@/lib/models/FaceDetection";
 import { FaceCluster } from "@/lib/models/FaceCluster";
 import { FaceClusterMember } from "@/lib/models/FaceClusterMember";
 import { JobStatus } from "@/lib/models/JobStatus";
-import { AzureFaceService } from "@/lib/services/azureFace";
-import { CloudinaryService } from "@/lib/services/cloudinary";
+import { Group } from "@/lib/models/Group";
+import { createCollection, indexFaces, calculateFaceQualityScore } from "@/lib/services/rekognition";
+import { bulkDelete } from "@/lib/services/s3";
+import { clusterFaces } from "@/lib/services/faceClustering";
 import connectDB from "@/lib/config/database";
 import redis from "@/lib/services/redis";
 import { faceGroupingQueue } from "./index";
+import { config } from "@/lib/config/env";
 import type {
   FaceDetectionJobData,
   FaceGroupingJobData,
@@ -16,8 +19,6 @@ import type {
   JobType,
   JobStatus as JobStatusType,
 } from "@/lib/types";
-
-const azureFaceService = new AzureFaceService();
 
 // Helper function to update job status
 async function updateJobStatus(
@@ -48,7 +49,7 @@ async function updateJobStatus(
   }
 }
 
-// Face Detection Worker
+// Face Detection Worker - Updated for AWS Rekognition
 export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
   "face-detection",
   async (job): Promise<void> => {
@@ -64,24 +65,31 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
     try {
       await connectDB();
 
-      // Get media URLs from database
+      // Get group to retrieve collection ID
+      const group = await Group.findById(groupId);
+      if (!group) {
+        throw new Error(`Group ${groupId} not found`);
+      }
+
+      // Ensure collection exists
+      let collectionId = group.rekognitionCollectionId;
+      if (!collectionId) {
+        // Create collection if it doesn't exist
+        collectionId = await createCollection(groupId);
+        await Group.findByIdAndUpdate(groupId, {
+          rekognitionCollectionId: collectionId,
+        });
+      }
+
+      // Get media items from database
       const mediaItems = await Media.find({
         _id: { $in: mediaIds },
         groupId,
-      }).select("_id cloudinaryUrl filename");
+      }).select("_id s3Key s3Bucket filename");
 
       if (mediaItems.length === 0) {
         throw new Error("No valid media items found");
       }
-
-      // Create URL to ID mapping
-      const urlToIdMap = new Map<string, string>();
-      const imageUrls: string[] = [];
-
-      mediaItems.forEach((item) => {
-        urlToIdMap.set(item.cloudinaryUrl, item._id.toString());
-        imageUrls.push(item.cloudinaryUrl);
-      });
 
       await updateJobStatus(
         jobId,
@@ -91,54 +99,81 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
         undefined,
         {
           totalItems: mediaItems.length,
-          currentStep: "detecting_faces",
+          currentStep: "indexing_faces",
         }
       );
 
-      // Detect faces using Azure Face API
-      const detectionResults = await azureFaceService.detectFaces(imageUrls);
-
       let processedCount = 0;
-      const totalCount = imageUrls.length;
+      const totalCount = mediaItems.length;
       const allFaceDetectionIds: string[] = [];
 
-      // Process results and store in database
-      for (const [url, faces] of detectionResults.entries()) {
-        const mediaId = urlToIdMap.get(url);
-        if (!mediaId) continue;
+      // Process each media item: Index faces in Rekognition
+      for (const mediaItem of mediaItems) {
+        try {
+          console.log(
+            `Indexing faces for media ${mediaItem._id} (${
+              processedCount + 1
+            }/${totalCount})`
+          );
 
-        // Store face detections
-        const faceDetectionPromises = faces.map(async (face) => {
-          const faceDetection = await FaceDetection.create({
-            mediaId,
-            azureFaceId: face.faceId,
-            boundingBox: face.boundingBox,
-            confidence: face.confidence,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-          });
-          return faceDetection._id.toString();
-        });
+          // Index faces in Rekognition (detects and stores in collection)
+          const indexedFaces = await indexFaces(
+            collectionId,
+            mediaItem.s3Bucket,
+            mediaItem.s3Key,
+            mediaItem._id.toString() // Use media ID as external image ID
+          );
 
-        const createdFaceIds = await Promise.all(faceDetectionPromises);
-        allFaceDetectionIds.push(...createdFaceIds);
+          // Store face detections in database with quality metrics
+          for (const face of indexedFaces) {
+            const qualityScore = calculateFaceQualityScore(face);
 
-        // Mark media as processed
-        await Media.findByIdAndUpdate(mediaId, { processed: true });
-
-        processedCount++;
-        const progress = Math.round(10 + (processedCount / totalCount) * 80); // 10-90%
-        await updateJobStatus(
-          jobId,
-          "FACE_DETECTION",
-          "PROCESSING",
-          progress,
-          undefined,
-          {
-            totalItems: totalCount,
-            processedItems: processedCount,
-            facesDetected: allFaceDetectionIds.length,
+            const faceDetection = await FaceDetection.create({
+              mediaId: mediaItem._id,
+              rekognitionFaceId: face.faceId,
+              boundingBox: face.boundingBox,
+              confidence: face.confidence,
+              quality: face.quality,
+              pose: face.pose,
+              qualityScore: qualityScore,
+            });
+            allFaceDetectionIds.push(faceDetection._id.toString());
           }
-        );
+
+          // Mark media as processed
+          await Media.findByIdAndUpdate(mediaItem._id, { processed: true });
+
+          console.log(
+            `Indexed ${indexedFaces.length} faces for media ${mediaItem._id}`
+          );
+
+          processedCount++;
+          const progress = Math.round(10 + (processedCount / totalCount) * 80); // 10-90%
+
+          await updateJobStatus(
+            jobId,
+            "FACE_DETECTION",
+            "PROCESSING",
+            progress,
+            undefined,
+            {
+              totalItems: totalCount,
+              processedItems: processedCount,
+              facesDetected: allFaceDetectionIds.length,
+            }
+          );
+
+          // Rate limiting: wait 1 second between images
+          if (processedCount < totalCount) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error(
+            `Failed to index faces for media ${mediaItem._id}:`,
+            error
+          );
+          // Continue with next media item
+        }
       }
 
       // Queue face grouping job if we have faces
@@ -200,7 +235,7 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
   }
 );
 
-// Face Grouping Worker
+// Face Grouping Worker - Updated for custom clustering algorithm
 export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
   "face-grouping",
   async (job): Promise<void> => {
@@ -216,12 +251,19 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
     try {
       await connectDB();
 
-      // Get face detections that haven't expired
+      // Get group and collection ID
+      const group = await Group.findById(groupId);
+      if (!group || !group.rekognitionCollectionId) {
+        throw new Error(`Group ${groupId} not found or missing collection ID`);
+      }
+
+      const collectionId = group.rekognitionCollectionId;
+
+      // Get unprocessed face detections
       const faceDetections = await FaceDetection.find({
         _id: { $in: faceDetectionIds },
-        expiresAt: { $gt: new Date() },
         processed: false,
-      }).select("_id azureFaceId");
+      }).select("_id rekognitionFaceId");
 
       if (faceDetections.length === 0) {
         await updateJobStatus(
@@ -237,11 +279,11 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
         return;
       }
 
-      const faceIds = faceDetections.map((f) => f.azureFaceId);
+      const rekognitionFaceIds = faceDetections.map((f) => f.rekognitionFaceId);
       const faceIdToDetectionId = new Map<string, string>();
 
       faceDetections.forEach((f) => {
-        faceIdToDetectionId.set(f.azureFaceId, f._id.toString());
+        faceIdToDetectionId.set(f.rekognitionFaceId, f._id.toString());
       });
 
       await updateJobStatus(
@@ -251,19 +293,17 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
         20,
         undefined,
         {
-          totalFaces: faceIds.length,
-          currentStep: "grouping_faces",
+          totalFaces: rekognitionFaceIds.length,
+          currentStep: "clustering_faces",
         }
       );
 
-      // Group faces using Azure Face API
-      let groupingResults;
-
-      if (faceIds.length <= 1000) {
-        groupingResults = [await azureFaceService.groupFaces(faceIds)];
-      } else {
-        groupingResults = await azureFaceService.batchGroupFaces(faceIds);
-      }
+      // Use custom clustering algorithm with aggressive threshold
+      const clusteringResult = await clusterFaces(
+        collectionId,
+        rekognitionFaceIds,
+        85 // 75% similarity threshold (lowered from 85->80->75 for better grouping)
+      );
 
       await updateJobStatus(
         jobId,
@@ -272,65 +312,62 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
         60,
         undefined,
         {
-          totalFaces: faceIds.length,
+          totalFaces: rekognitionFaceIds.length,
+          clustersFound: clusteringResult.clusters.length,
           currentStep: "creating_clusters",
         }
       );
 
-      // Process grouping results
       let clustersCreated = 0;
       let facesGrouped = 0;
 
-      for (const result of groupingResults) {
-        // Create clusters for grouped faces
-        for (const group of result.groups) {
-          if (group.length < 2) continue; // Skip single-face groups
+      // Create clusters for grouped faces (size > 1)
+      for (const cluster of clusteringResult.clusters) {
+        // Create FaceCluster
+        const faceCluster = await FaceCluster.create({
+          groupId,
+          appearanceCount: cluster.size,
+          confidence: cluster.averageSimilarity / 100, // Convert percentage to 0-1
+        });
 
-          const cluster = await FaceCluster.create({
-            groupId,
-            appearanceCount: group.length,
-            confidence: 0.8, // Default confidence
-          });
+        // Add faces to cluster
+        const clusterMemberPromises = cluster.faceIds
+          .map((rekognitionFaceId) =>
+            faceIdToDetectionId.get(rekognitionFaceId)
+          )
+          .filter((detectionId): detectionId is string => Boolean(detectionId))
+          .map((detectionId) =>
+            FaceClusterMember.create({
+              clusterId: faceCluster._id,
+              faceDetectionId: detectionId,
+              confidence: cluster.averageSimilarity / 100,
+            })
+          );
 
-          // Add faces to cluster
-          const clusterMemberPromises = group
-            .map((faceId) => faceIdToDetectionId.get(faceId))
-            .filter((detectionId): detectionId is string =>
-              Boolean(detectionId)
-            )
-            .map((detectionId) =>
-              FaceClusterMember.create({
-                clusterId: cluster._id,
-                faceDetectionId: detectionId,
-                confidence: 0.8,
-              })
-            );
+        await Promise.all(clusterMemberPromises);
+        clustersCreated++;
+        facesGrouped += cluster.size;
+      }
 
-          await Promise.all(clusterMemberPromises);
-          clustersCreated++;
-          facesGrouped += group.length;
-        }
+      // Create individual clusters for unclustered faces (messyGroup equivalent)
+      for (const rekognitionFaceId of clusteringResult.unclusteredFaces) {
+        const detectionId = faceIdToDetectionId.get(rekognitionFaceId);
+        if (!detectionId) continue;
 
-        // Handle messy group (uncertain faces) - create individual clusters
-        for (const faceId of result.messyGroup) {
-          const detectionId = faceIdToDetectionId.get(faceId);
-          if (!detectionId) continue;
+        const faceCluster = await FaceCluster.create({
+          groupId,
+          appearanceCount: 1,
+          confidence: 0.5, // Lower confidence for single faces
+        });
 
-          const cluster = await FaceCluster.create({
-            groupId,
-            appearanceCount: 1,
-            confidence: 0.5, // Lower confidence for uncertain faces
-          });
+        await FaceClusterMember.create({
+          clusterId: faceCluster._id,
+          faceDetectionId: detectionId,
+          confidence: 0.5,
+        });
 
-          await FaceClusterMember.create({
-            clusterId: cluster._id,
-            faceDetectionId: detectionId,
-            confidence: 0.5,
-          });
-
-          clustersCreated++;
-          facesGrouped++;
-        }
+        clustersCreated++;
+        facesGrouped++;
       }
 
       // Mark face detections as processed
@@ -346,9 +383,10 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
         100,
         undefined,
         {
-          totalFaces: faceIds.length,
+          totalFaces: rekognitionFaceIds.length,
           clustersCreated,
           facesGrouped,
+          unclusteredFaces: clusteringResult.unclusteredFaces.length,
           completedAt: new Date().toISOString(),
         }
       );
@@ -372,7 +410,7 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
   }
 );
 
-// Cleanup Worker
+// Cleanup Worker - Updated for S3
 export const cleanupWorker = new Worker<CleanupJobData>(
   "cleanup",
   async (job): Promise<void> => {
@@ -393,13 +431,13 @@ export const cleanupWorker = new Worker<CleanupJobData>(
         mediaToDelete = await Media.find({
           _id: { $in: mediaIds },
           groupId,
-        }).select("_id publicId fileSize");
+        }).select("_id s3Key fileSize");
       } else {
         // Delete all media older than target date
         mediaToDelete = await Media.find({
           groupId,
           createdAt: { $lt: targetDate },
-        }).select("_id publicId fileSize");
+        }).select("_id s3Key fileSize");
       }
 
       if (mediaToDelete.length === 0) {
@@ -424,13 +462,13 @@ export const cleanupWorker = new Worker<CleanupJobData>(
         undefined,
         {
           totalItems: mediaToDelete.length,
-          currentStep: "deleting_from_cloudinary",
+          currentStep: "deleting_from_s3",
         }
       );
 
-      // Delete from Cloudinary
-      const publicIds = mediaToDelete.map((m) => m.publicId);
-      await CloudinaryService.bulkDelete(publicIds);
+      // Delete from S3
+      const s3Keys = mediaToDelete.map((m) => m.s3Key);
+      await bulkDelete(s3Keys);
 
       await updateJobStatus(
         jobId,
@@ -446,11 +484,18 @@ export const cleanupWorker = new Worker<CleanupJobData>(
 
       // Delete from database (cascades to face detections and cluster members)
       const mediaIdsToDelete = mediaToDelete.map((m) => m._id);
+
+      // Delete associated face detections first
+      await FaceDetection.deleteMany({
+        mediaId: { $in: mediaIdsToDelete },
+      });
+
+      // Delete media
       await Media.deleteMany({ _id: { $in: mediaIdsToDelete } });
 
       // Update group storage usage
       const totalSize = mediaToDelete.reduce((sum, m) => sum + m.fileSize, 0);
-      await Media.updateOne(
+      await Group.updateOne(
         { _id: groupId },
         { $inc: { storageUsed: -totalSize } }
       );

@@ -6,8 +6,9 @@ export interface IMedia extends Document {
   uploaderId: mongoose.Types.ObjectId;
   filename: string;
   originalName: string;
-  cloudinaryUrl: string;
-  publicId: string;
+  s3Key: string; // S3 object key
+  s3Bucket: string; // S3 bucket name
+  url: string; // Public URL to the file
   mimeType: string;
   fileSize: number;
   width?: number;
@@ -37,11 +38,15 @@ const mediaSchema = new Schema<IMedia>(
       type: String,
       required: true,
     },
-    cloudinaryUrl: {
+    s3Key: {
       type: String,
       required: true,
     },
-    publicId: {
+    s3Bucket: {
+      type: String,
+      required: true,
+    },
+    url: {
       type: String,
       required: true,
     },

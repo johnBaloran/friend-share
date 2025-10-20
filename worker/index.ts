@@ -1,3 +1,6 @@
+// IMPORTANT: Load environment variables first before any other imports
+import "./env-loader";
+
 import { QueueManager } from "@/lib/queues/manager";
 import { config } from "@/lib/config/env";
 

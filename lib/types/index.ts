@@ -37,6 +37,7 @@ export interface IGroup extends BaseDocument {
   storageLimit: number;
   storageUsed: number;
   autoDeleteDays: number;
+  rekognitionCollectionId?: string;
 }
 
 // Media Types
@@ -45,8 +46,9 @@ export interface IMedia extends BaseDocument {
   uploaderId: mongoose.Types.ObjectId;
   filename: string;
   originalName: string;
-  cloudinaryUrl: string;
-  publicId: string;
+  s3Key: string;
+  s3Bucket: string;
+  url: string;
   mimeType: string;
   fileSize: number;
   width?: number;
@@ -64,11 +66,10 @@ export interface BoundingBox {
 
 export interface IFaceDetection extends BaseDocument {
   mediaId: mongoose.Types.ObjectId;
-  azureFaceId: string;
+  rekognitionFaceId: string;
   boundingBox: BoundingBox;
   confidence: number;
   processed: boolean;
-  expiresAt: Date;
 }
 
 export interface IFaceCluster extends BaseDocument {
@@ -105,30 +106,27 @@ export interface IJobStatus extends BaseDocument {
   metadata: Record<string, unknown>;
 }
 
-// Azure Face API Types
-export interface AzureFaceDetectionResult {
+// AWS Rekognition Types
+export interface RekognitionFaceDetection {
+  faceId?: string;
+  boundingBox: BoundingBox;
+  confidence: number;
+  imageId?: string;
+}
+
+export interface RekognitionSearchResult {
   faceId: string;
-  faceRectangle: {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-  };
+  similarity: number;
+  imageId?: string;
 }
 
-export interface AzureFaceGroupResult {
-  groups: string[][];
-  messyGroup: string[];
-}
-
-// Cloudinary Types
-export interface CloudinaryUploadResult {
-  public_id: string;
-  secure_url: string;
-  width: number;
-  height: number;
-  bytes: number;
-  format: string;
+// AWS S3 Types
+export interface S3UploadResult {
+  key: string;
+  url: string;
+  bucket: string;
+  size: number;
+  contentType: string;
 }
 
 // Job Queue Types

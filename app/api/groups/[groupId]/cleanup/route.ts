@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createAuthMiddleware } from "@/lib/middleware/clerkAuth";
 import { Group } from "@/lib/models/Group";
-import { StorageService } from "@/lib/services/storageService";
+import { getStorageAnalytics, performCleanup } from "@/lib/services/storageService";
 import { QueueManager } from "@/lib/queues/manager";
 import connectDB from "@/lib/config/database";
 import { z } from "zod";
@@ -72,7 +72,7 @@ export async function POST(
     };
 
     // For large cleanups, queue a background job
-    const estimatedFiles = await StorageService.getStorageAnalytics(groupId);
+    const estimatedFiles = await getStorageAnalytics(groupId);
 
     if (estimatedFiles.mediaByType.images > 100) {
       // Queue cleanup job for large operations
@@ -91,7 +91,7 @@ export async function POST(
       } satisfies ApiResponse);
     } else {
       // Process immediately for small operations
-      const result = await StorageService.performCleanup(
+      const result = await performCleanup(
         groupId,
         cleanupOptions
       );

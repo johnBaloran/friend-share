@@ -3,6 +3,7 @@ import { createAuthMiddleware } from "@/lib/middleware/clerkAuth";
 import { Media, IMedia } from "@/lib/models/Media";
 import { Group } from "@/lib/models/Group";
 import { IUser } from "@/lib/models/User";
+import { getPresignedUrl } from "@/lib/services/s3";
 import connectDB from "@/lib/config/database";
 import mongoose from "mongoose";
 
@@ -80,22 +81,57 @@ export async function GET(
       Media.countDocuments(query),
     ]);
 
+    // Generate presigned URLs for all media items
+    const mediaWithPresignedUrls = await Promise.all(
+      media.map(async (item: PopulatedMedia) => {
+        try {
+          const presignedUrl = await getPresignedUrl(item.s3Key, 3600); // 1 hour expiry
+          return {
+            _id: item._id,
+            filename: item.filename,
+            originalName: item.originalName,
+            cloudinaryUrl: presignedUrl, // Use presigned URL
+            url: presignedUrl,
+            s3Key: item.s3Key,
+            s3Bucket: item.s3Bucket,
+            createdAt: item.createdAt,
+            uploader: {
+              name: item.uploaderId.name,
+              email: item.uploaderId.email,
+            },
+            fileSize: item.fileSize,
+            processed: item.processed,
+          };
+        } catch (error) {
+          console.error(
+            `Failed to generate presigned URL for ${item.s3Key}:`,
+            error
+          );
+          // Return item without URL if presigned URL generation fails
+          return {
+            _id: item._id,
+            filename: item.filename,
+            originalName: item.originalName,
+            cloudinaryUrl: "",
+            url: "",
+            s3Key: item.s3Key,
+            s3Bucket: item.s3Bucket,
+            createdAt: item.createdAt,
+            uploader: {
+              name: item.uploaderId.name,
+              email: item.uploaderId.email,
+            },
+            fileSize: item.fileSize,
+            processed: item.processed,
+          };
+        }
+      })
+    );
+
     return Response.json({
       success: true,
       data: {
-        media: media.map((item: PopulatedMedia) => ({
-          _id: item._id,
-          filename: item.filename,
-          originalName: item.originalName,
-          cloudinaryUrl: item.cloudinaryUrl,
-          createdAt: item.createdAt,
-          uploader: {
-            name: item.uploaderId.name,
-            email: item.uploaderId.email,
-          },
-          fileSize: item.fileSize,
-          processed: item.processed,
-        })),
+        media: mediaWithPresignedUrls,
         pagination: {
           page,
           limit,

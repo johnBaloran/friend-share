@@ -13,7 +13,7 @@ const updateClusterSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { clusterId: string } }
+  { params }: { params: Promise<{ clusterId: string }> }
 ): Promise<Response> {
   const authResult = await createAuthMiddleware(true)();
 
@@ -30,7 +30,7 @@ export async function PATCH(
     );
   }
 
-  const clusterId = params.clusterId;
+  const { clusterId } = await params;
 
   try {
     await connectDB();
@@ -99,7 +99,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { clusterId: string } }
+  { params }: { params: Promise<{ clusterId: string }> }
 ): Promise<Response> {
   const authResult = await createAuthMiddleware(true)();
 
@@ -116,7 +116,7 @@ export async function DELETE(
     );
   }
 
-  const clusterId = params.clusterId;
+  const { clusterId } = await params;
 
   try {
     await connectDB();

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createAuthMiddleware } from "@/lib/middleware/clerkAuth";
 import { Group } from "@/lib/models/Group";
-import { StorageService } from "@/lib/services/storageService";
+import { getStorageAnalytics } from "@/lib/services/storageService";
 import connectDB from "@/lib/config/database";
 import type { ApiResponse } from "@/lib/types";
 
@@ -50,7 +50,7 @@ export async function GET(
       );
     }
 
-    const analytics = await StorageService.getStorageAnalytics(groupId);
+    const analytics = await getStorageAnalytics(groupId);
 
     return Response.json({
       success: true,

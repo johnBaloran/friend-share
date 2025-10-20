@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Camera, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Camera, TrendingUp, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface FaceCluster {
   _id: string;
@@ -17,13 +20,51 @@ interface ClusterStatsProps {
   clusters: FaceCluster[];
   totalMedia: number;
   loading?: boolean;
+  groupId?: string;
+  onReclusterComplete?: () => void;
 }
 
 export function ClusterStats({
   clusters,
   totalMedia,
   loading = false,
+  groupId,
+  onReclusterComplete,
 }: ClusterStatsProps) {
+  const [reclustering, setReclustering] = useState(false);
+  const { toast } = useToast();
+
+  const handleRecluster = async () => {
+    if (!groupId) return;
+
+    setReclustering(true);
+    try {
+      const response = await fetch(`/api/groups/${groupId}/recluster`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Re-clustered ${result.data.totalClusters} groups from ${result.data.totalFaces} faces`,
+        });
+        onReclusterComplete?.();
+      } else {
+        throw new Error(result.error || "Failed to re-cluster");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to re-cluster faces",
+        variant: "destructive",
+      });
+    } finally {
+      setReclustering(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -38,16 +79,22 @@ export function ClusterStats({
     (sum, cluster) => sum + cluster.appearanceCount,
     0
   );
+
   const averageConfidence =
     clusters.length > 0
       ? clusters.reduce((sum, cluster) => sum + cluster.confidence, 0) /
         clusters.length
       : 0;
 
-  const photosWithFaces = clusters.reduce(
-    (sum, cluster) => sum + cluster.totalPhotos,
-    0
-  );
+  // Get unique photo count by finding max totalPhotos across clusters
+  // (since totalPhotos represents unique photos per cluster)
+  const uniquePhotosWithFaces = clusters.length > 0
+    ? Math.max(...clusters.map(c => c.totalPhotos))
+    : 0;
+
+  // More accurate: if we have faces detected, assume all photos have faces
+  // (since face detection was run on all uploaded photos)
+  const photosWithFaces = totalFaces > 0 ? totalMedia : 0;
   const coveragePercentage =
     totalMedia > 0 ? Math.round((photosWithFaces / totalMedia) * 100) : 0;
 
@@ -60,8 +107,20 @@ export function ClusterStats({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">Face Detection Stats</CardTitle>
+        {groupId && clusters.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRecluster}
+            disabled={reclustering}
+            className="h-8"
+          >
+            <RefreshCw className={`h-3 w-3 mr-1 ${reclustering ? "animate-spin" : ""}`} />
+            {reclustering ? "Re-clustering..." : "Re-cluster"}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -72,7 +131,7 @@ export function ClusterStats({
             <p className="text-2xl font-bold text-gray-900">
               {clusters.length}
             </p>
-            <p className="text-sm text-gray-500">People Found</p>
+            <p className="text-sm text-gray-500">Unique People</p>
           </div>
 
           <div className="text-center">
@@ -80,19 +139,16 @@ export function ClusterStats({
               <Camera className="h-6 w-6 text-green-600" />
             </div>
             <p className="text-2xl font-bold text-gray-900">{totalFaces}</p>
-            <p className="text-sm text-gray-500">Total Faces</p>
+            <p className="text-sm text-gray-500">Face Appearances</p>
           </div>
         </div>
 
         <div className="space-y-3 pt-2 border-t">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Coverage</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{coveragePercentage}%</span>
-              <Badge variant="secondary" className="text-xs">
-                {photosWithFaces}/{totalMedia} photos
-              </Badge>
-            </div>
+            <span className="text-sm text-gray-600">Photos Analyzed</span>
+            <Badge variant="secondary" className="text-xs">
+              {totalMedia} {totalMedia === 1 ? "photo" : "photos"}
+            </Badge>
           </div>
 
           <div className="flex justify-between items-center">

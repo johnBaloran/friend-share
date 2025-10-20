@@ -8,17 +8,19 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),
 
-  // Azure Face API
-  AZURE_FACE_API_KEY: z.string(),
-  AZURE_FACE_ENDPOINT: z.string().url(),
+  // AWS Credentials
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_REGION: z.string().default("us-east-1"),
 
-  // Cloudinary
-  CLOUDINARY_CLOUD_NAME: z.string(),
-  CLOUDINARY_API_KEY: z.string(),
-  CLOUDINARY_API_SECRET: z.string(),
+  // AWS S3
+  AWS_S3_BUCKET_NAME: z.string(),
+
+  // AWS Rekognition
+  AWS_REKOGNITION_COLLECTION_PREFIX: z.string().default("face-media-group"),
 
   // Redis
-  // REDIS_URL: z.string().url(),
+  REDIS_URL: z.string().url().optional(),
 
   // App Settings
   NODE_ENV: z

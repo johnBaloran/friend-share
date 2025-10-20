@@ -168,7 +168,7 @@ export async function POST(
     // Prepare download items
     const downloadItems = mediaItems.map((item) => ({
       filename: item.originalName || item.filename,
-      url: item.cloudinaryUrl,
+      url: item.url, // Use S3 URL
       clusterId: clusterId,
       clusterName: clusterId ? zipName : undefined,
     }));

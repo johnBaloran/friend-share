@@ -21,6 +21,7 @@ export interface IGroup extends Document {
   storageLimit: number;
   storageUsed: number;
   autoDeleteDays: number;
+  rekognitionCollectionId?: string; // AWS Rekognition collection ID
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,6 +81,10 @@ const groupSchema = new Schema<IGroup>(
     autoDeleteDays: {
       type: Number,
       default: 30,
+    },
+    rekognitionCollectionId: {
+      type: String,
+      required: false,
     },
   },
   {
