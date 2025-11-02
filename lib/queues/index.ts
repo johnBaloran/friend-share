@@ -6,6 +6,10 @@ import type {
   CleanupJobData,
 } from "@/lib/types";
 
+if (!redis) {
+  throw new Error("Redis connection not configured. Please set REDIS_URL environment variable.");
+}
+
 // Queue configurations
 const defaultJobOptions = {
   removeOnComplete: 10,

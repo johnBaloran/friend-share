@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -31,25 +31,7 @@ import {
   UserPlus,
   Loader2,
 } from "lucide-react";
-
-interface MemberInfo {
-  _id: string;
-  userId: {
-    _id: string;
-    name?: string;
-    email: string;
-    avatar?: string;
-  };
-  role: "ADMIN" | "MEMBER" | "VIEWER";
-  permissions: {
-    canUpload: boolean;
-    canDownload: boolean;
-    canDelete: boolean;
-  };
-  joinedAt: string;
-  uploadCount: number;
-  storageUsed: number;
-}
+import { groupsApi, Member } from "@/lib/api/groups";
 
 interface MemberManagerProps {
   groupId: string;
@@ -62,21 +44,15 @@ export function MemberManager({
   currentUserId,
   isAdmin,
 }: MemberManagerProps) {
-  const [members, setMembers] = useState<MemberInfo[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadMembers = async (): Promise<void> => {
     try {
-      const response = await fetch(`/api/groups/${groupId}/members`);
-      const result = await response.json();
-
-      if (result.success) {
-        setMembers(result.data);
-      } else {
-        throw new Error(result.error);
-      }
+      const data = await groupsApi.getMembers(groupId);
+      setMembers(data);
     } catch (error) {
       console.error("Failed to load members:", error);
       toast({
@@ -101,28 +77,12 @@ export function MemberManager({
 
     setUpdating(memberId);
     try {
-      const response = await fetch(
-        `/api/groups/${groupId}/members/${memberId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ role: newRole }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Member role updated successfully",
-        });
-        await loadMembers();
-      } else {
-        throw new Error(result.error);
-      }
+      await groupsApi.updateMember(groupId, memberId, { role: newRole });
+      toast({
+        title: "Success",
+        description: "Member role updated successfully",
+      });
+      await loadMembers();
     } catch (error) {
       console.error("Failed to update member role:", error);
       toast({
@@ -150,28 +110,12 @@ export function MemberManager({
 
     setUpdating(memberId);
     try {
-      const response = await fetch(
-        `/api/groups/${groupId}/members/${memberId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ permissions }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Member permissions updated successfully",
-        });
-        await loadMembers();
-      } else {
-        throw new Error(result.error);
-      }
+      await groupsApi.updateMember(groupId, memberId, { permissions });
+      toast({
+        title: "Success",
+        description: "Member permissions updated successfully",
+      });
+      await loadMembers();
     } catch (error) {
       console.error("Failed to update member permissions:", error);
       toast({
@@ -190,24 +134,12 @@ export function MemberManager({
   const removeMember = async (memberId: string): Promise<void> => {
     setUpdating(memberId);
     try {
-      const response = await fetch(
-        `/api/groups/${groupId}/members/${memberId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Member removed successfully",
-        });
-        await loadMembers();
-      } else {
-        throw new Error(result.error);
-      }
+      await groupsApi.removeMember(groupId, memberId);
+      toast({
+        title: "Success",
+        description: "Member removed successfully",
+      });
+      await loadMembers();
     } catch (error) {
       console.error("Failed to remove member:", error);
       toast({
@@ -232,14 +164,6 @@ export function MemberManager({
       default:
         return <Users className="h-4 w-4" />;
     }
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (loading) {
@@ -272,31 +196,24 @@ export function MemberManager({
       <CardContent>
         <div className="space-y-4">
           {members.map((member) => {
-            const isCurrentUser = member.userId._id === currentUserId;
+            const isCurrentUser = member.userId === currentUserId;
             const canModify = isAdmin && !isCurrentUser;
 
             return (
               <div
-                key={member._id}
+                key={member.userId}
                 className="flex items-center justify-between p-4 border rounded-lg"
               >
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage
-                      src={member.userId.avatar}
-                      alt={member.userId.name}
-                    />
                     <AvatarFallback>
-                      {member.userId.name?.charAt(0) ||
-                        member.userId.email.charAt(0)}
+                      {member.userId.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">
-                        {member.userId.name || member.userId.email}
-                      </p>
+                      <p className="font-medium">{member.userId}</p>
                       {isCurrentUser && (
                         <Badge variant="secondary" className="text-xs">
                           You
@@ -304,12 +221,7 @@ export function MemberManager({
                       )}
                       {getRoleIcon(member.role)}
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {member.userId.email}
-                    </p>
                     <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                      <span>{member.uploadCount} uploads</span>
-                      <span>{formatFileSize(member.storageUsed)} used</span>
                       <span>
                         Joined {new Date(member.joinedAt).toLocaleDateString()}
                       </span>
@@ -323,9 +235,9 @@ export function MemberManager({
                     <Select
                       value={member.role}
                       onValueChange={(value) =>
-                        updateMemberRole(member._id, value)
+                        updateMemberRole(member.userId, value)
                       }
-                      disabled={updating === member._id}
+                      disabled={updating === member.userId}
                     >
                       <SelectTrigger className="w-28">
                         <SelectValue />
@@ -352,26 +264,24 @@ export function MemberManager({
                         <DialogHeader>
                           <DialogTitle>Member Permissions</DialogTitle>
                           <DialogDescription>
-                            Configure what{" "}
-                            {member.userId.name || member.userId.email} can do
-                            in this group.
+                            Configure permissions for {member.userId}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-3">
                             <div className="flex items-center space-x-2">
                               <Checkbox
-                                id={`upload-${member._id}`}
+                                id={`upload-${member.userId}`}
                                 checked={member.permissions.canUpload}
                                 onCheckedChange={(checked) =>
-                                  updateMemberPermissions(member._id, {
+                                  updateMemberPermissions(member.userId, {
                                     ...member.permissions,
                                     canUpload: Boolean(checked),
                                   })
                                 }
                               />
                               <label
-                                htmlFor={`upload-${member._id}`}
+                                htmlFor={`upload-${member.userId}`}
                                 className="text-sm"
                               >
                                 Can upload photos
@@ -379,17 +289,17 @@ export function MemberManager({
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
-                                id={`download-${member._id}`}
+                                id={`download-${member.userId}`}
                                 checked={member.permissions.canDownload}
                                 onCheckedChange={(checked) =>
-                                  updateMemberPermissions(member._id, {
+                                  updateMemberPermissions(member.userId, {
                                     ...member.permissions,
                                     canDownload: Boolean(checked),
                                   })
                                 }
                               />
                               <label
-                                htmlFor={`download-${member._id}`}
+                                htmlFor={`download-${member.userId}`}
                                 className="text-sm"
                               >
                                 Can download photos
@@ -397,17 +307,17 @@ export function MemberManager({
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
-                                id={`delete-${member._id}`}
+                                id={`delete-${member.userId}`}
                                 checked={member.permissions.canDelete}
                                 onCheckedChange={(checked) =>
-                                  updateMemberPermissions(member._id, {
+                                  updateMemberPermissions(member.userId, {
                                     ...member.permissions,
                                     canDelete: Boolean(checked),
                                   })
                                 }
                               />
                               <label
-                                htmlFor={`delete-${member._id}`}
+                                htmlFor={`delete-${member.userId}`}
                                 className="text-sm"
                               >
                                 Can delete photos
@@ -439,19 +349,17 @@ export function MemberManager({
                           <DialogDescription>
                             {isCurrentUser
                               ? "Are you sure you want to leave this group? You will lose access to all photos and data."
-                              : `Are you sure you want to remove ${
-                                  member.userId.name || member.userId.email
-                                } from this group?`}
+                              : `Are you sure you want to remove ${member.userId} from this group?`}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="flex gap-2">
                           <Button
-                            onClick={() => removeMember(member._id)}
+                            onClick={() => removeMember(member.userId)}
                             variant="destructive"
-                            disabled={updating === member._id}
+                            disabled={updating === member.userId}
                             className="flex-1"
                           >
-                            {updating === member._id ? (
+                            {updating === member.userId ? (
                               <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : null}
                             {isCurrentUser ? "Leave Group" : "Remove Member"}
@@ -466,7 +374,7 @@ export function MemberManager({
                     </Dialog>
                   )}
 
-                  {updating === member._id && (
+                  {updating === member.userId && (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   )}
                 </div>

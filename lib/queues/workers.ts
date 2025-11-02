@@ -5,13 +5,18 @@ import { FaceCluster } from "@/lib/models/FaceCluster";
 import { FaceClusterMember } from "@/lib/models/FaceClusterMember";
 import { JobStatus } from "@/lib/models/JobStatus";
 import { Group } from "@/lib/models/Group";
-import { createCollection, indexFaces, calculateFaceQualityScore } from "@/lib/services/rekognition";
+import {
+  createCollection,
+  indexFaces,
+  calculateFaceQualityScore,
+  detectFaces,
+} from "@/lib/services/rekognition";
 import { bulkDelete } from "@/lib/services/s3";
 import { clusterFaces } from "@/lib/services/faceClustering";
+import { enhanceFaceForRecognition } from "@/lib/services/faceEnhancement";
 import connectDB from "@/lib/config/database";
 import redis from "@/lib/services/redis";
 import { faceGroupingQueue } from "./index";
-import { config } from "@/lib/config/env";
 import type {
   FaceDetectionJobData,
   FaceGroupingJobData,
@@ -19,6 +24,12 @@ import type {
   JobType,
   JobStatus as JobStatusType,
 } from "@/lib/types";
+
+if (!redis) {
+  throw new Error(
+    "Redis connection not configured. Please set REDIS_URL environment variable."
+  );
+}
 
 // Helper function to update job status
 async function updateJobStatus(
@@ -107,44 +118,97 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
       const totalCount = mediaItems.length;
       const allFaceDetectionIds: string[] = [];
 
-      // Process each media item: Index faces in Rekognition
+      // Two-stage processing for better accuracy:
+      // Stage 1: Detect faces (get bounding boxes)
+      // Stage 2: Enhance each face with Sharp
+      // Stage 3: Index enhanced faces in Rekognition
       for (const mediaItem of mediaItems) {
         try {
           console.log(
-            `Indexing faces for media ${mediaItem._id} (${
+            `Processing media ${mediaItem._id} (${
               processedCount + 1
             }/${totalCount})`
           );
 
-          // Index faces in Rekognition (detects and stores in collection)
-          const indexedFaces = await indexFaces(
-            collectionId,
+          // STAGE 1: Detect faces to get bounding boxes
+          console.log(`  Stage 1: Detecting faces...`);
+          const detectedFaces = await detectFaces(
             mediaItem.s3Bucket,
-            mediaItem.s3Key,
-            mediaItem._id.toString() // Use media ID as external image ID
+            mediaItem.s3Key
           );
 
-          // Store face detections in database with quality metrics
-          for (const face of indexedFaces) {
-            const qualityScore = calculateFaceQualityScore(face);
+          if (detectedFaces.length === 0) {
+            console.log(`  No faces detected, skipping`);
+            await Media.findByIdAndUpdate(mediaItem._id, { processed: true });
+            processedCount++;
+            continue;
+          }
 
-            const faceDetection = await FaceDetection.create({
-              mediaId: mediaItem._id,
-              rekognitionFaceId: face.faceId,
-              boundingBox: face.boundingBox,
-              confidence: face.confidence,
-              quality: face.quality,
-              pose: face.pose,
-              qualityScore: qualityScore,
-            });
-            allFaceDetectionIds.push(faceDetection._id.toString());
+          console.log(`  Detected ${detectedFaces.length} faces`);
+
+          // STAGE 2: Enhance each detected face
+          console.log(`  Stage 2: Enhancing faces with Sharp...`);
+          const enhancedFaces = await Promise.all(
+            detectedFaces.map((face, index) =>
+              enhanceFaceForRecognition(
+                mediaItem.s3Bucket,
+                mediaItem.s3Key,
+                face.boundingBox,
+                index,
+                mediaItem._id.toString(),
+                false // Don't upload to S3, we'll pass bytes directly
+              )
+            )
+          );
+
+          console.log(`  Enhanced ${enhancedFaces.length} faces`);
+
+          // STAGE 3: Index enhanced faces in Rekognition (using bytes directly)
+          console.log(`  Stage 3: Indexing enhanced faces in Rekognition...`);
+          const faceDetectionRecords = [];
+
+          for (let i = 0; i < enhancedFaces.length; i++) {
+            const enhancedFace = enhancedFaces[i];
+            const originalFace = detectedFaces[i];
+
+            try {
+              // Index the ENHANCED face bytes directly (no S3 upload needed!)
+              const indexedFaces = await indexFaces(
+                collectionId,
+                enhancedFace.buffer, // Pass buffer directly
+                `${mediaItem._id.toString()}-face-${i}` // External ID
+              );
+
+              // Should only be 1 face since we cropped to a single face
+              if (indexedFaces.length > 0) {
+                const indexedFace = indexedFaces[0];
+                const qualityScore = calculateFaceQualityScore(indexedFace);
+
+                const faceDetection = await FaceDetection.create({
+                  mediaId: mediaItem._id,
+                  rekognitionFaceId: indexedFace.faceId,
+                  boundingBox: originalFace.boundingBox, // Store ORIGINAL bounding box
+                  confidence: indexedFace.confidence,
+                  quality: indexedFace.quality,
+                  pose: indexedFace.pose,
+                  qualityScore: qualityScore,
+                  // No enhancedFace stored - we didn't upload to S3
+                });
+
+                faceDetectionRecords.push(faceDetection);
+                allFaceDetectionIds.push(faceDetection._id.toString());
+              }
+            } catch (error) {
+              console.error(`  Failed to index face ${i}:`, error);
+              // Continue with next face
+            }
           }
 
           // Mark media as processed
           await Media.findByIdAndUpdate(mediaItem._id, { processed: true });
 
           console.log(
-            `Indexed ${indexedFaces.length} faces for media ${mediaItem._id}`
+            `  ✅ Completed: Detected ${detectedFaces.length} → Enhanced ${enhancedFaces.length} → Indexed ${faceDetectionRecords.length} faces`
           );
 
           processedCount++;
@@ -163,13 +227,13 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
             }
           );
 
-          // Rate limiting: wait 1 second between images
+          // Rate limiting: wait 1.5 seconds between images (more processing steps)
           if (processedCount < totalCount) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         } catch (error) {
           console.error(
-            `Failed to index faces for media ${mediaItem._id}:`,
+            `Failed to process faces for media ${mediaItem._id}:`,
             error
           );
           // Continue with next media item
@@ -192,7 +256,7 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
           }
         );
 
-        await faceGroupingQueue.add("group-faces", {
+        await faceGroupingQueue.add("FACE_GROUPING", {
           groupId,
           userId: job.data.userId,
           faceDetectionIds: allFaceDetectionIds,

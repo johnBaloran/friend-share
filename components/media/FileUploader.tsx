@@ -259,6 +259,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, CheckCircle } from "lucide-react";
+import { mediaApi } from "@/lib/api/media";
 
 interface FileUploaderProps {
   groupId: string;
@@ -272,8 +273,8 @@ interface UploadState {
   currentStep: "uploading" | "processing" | "complete";
   results?: {
     uploadedCount: number;
-    facesDetected: number;
-    clustersCreated: number;
+    jobId: string;
+    message: string;
   };
 }
 
@@ -343,9 +344,6 @@ export function FileUploader({ groupId, onUploadComplete }: FileUploaderProps) {
     });
 
     try {
-      const formData = new FormData();
-      files.forEach((file) => formData.append("files", file));
-
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadState((prev) => ({
@@ -354,52 +352,39 @@ export function FileUploader({ groupId, onUploadComplete }: FileUploaderProps) {
         }));
       }, 1000);
 
-      const response = await fetch(`/api/groups/${groupId}/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const result = await mediaApi.upload(groupId, files);
 
       clearInterval(progressInterval);
 
-      const result = await response.json();
+      setUploadState({
+        uploading: false,
+        processing: false,
+        progress: 100,
+        currentStep: "complete",
+        results: {
+          uploadedCount: result.data.length,
+          jobId: result.jobId,
+          message: result.message || `Uploaded ${result.data.length} files successfully`,
+        },
+      });
 
-      if (result.success) {
+      toast({
+        title: "Upload successful",
+        description: result.message || `Uploaded ${result.data.length} files. Face detection is processing...`,
+      });
+
+      setFiles([]);
+      onUploadComplete();
+
+      // Reset state after 3 seconds
+      setTimeout(() => {
         setUploadState({
           uploading: false,
           processing: false,
-          progress: 100,
-          currentStep: "complete",
-          results: {
-            uploadedCount: result.data.uploadedCount,
-            facesDetected: result.data.facesDetected,
-            clustersCreated: result.data.clustersCreated,
-          },
+          progress: 0,
+          currentStep: "uploading",
         });
-
-        toast({
-          title: "Upload successful",
-          description: `Uploaded ${result.data.uploadedCount} files${
-            result.data.facesDetected > 0
-              ? `, detected ${result.data.facesDetected} faces`
-              : ""
-          }`,
-        });
-
-        setFiles([]);
-        onUploadComplete();
-
-        // Reset state after 3 seconds
-        setTimeout(() => {
-          setUploadState({
-            uploading: false,
-            processing: false,
-            progress: 0,
-            currentStep: "uploading",
-          });
-        }, 3000);
-      } else {
-        throw new Error(result.error || "Upload failed");
-      }
+      }, 3000);
     } catch (error) {
       console.error("Upload failed:", error);
 
@@ -530,14 +515,9 @@ export function FileUploader({ groupId, onUploadComplete }: FileUploaderProps) {
             </div>
             <div className="space-y-1 text-sm text-green-800">
               <p>📁 {uploadState.results.uploadedCount} files uploaded</p>
-              {uploadState.results.facesDetected > 0 && (
-                <>
-                  <p>👤 {uploadState.results.facesDetected} faces detected</p>
-                  <p>
-                    👥 {uploadState.results.clustersCreated} people identified
-                  </p>
-                </>
-              )}
+              <p className="text-xs text-green-700 mt-2">
+                {uploadState.results.message}
+              </p>
             </div>
           </div>
         )}

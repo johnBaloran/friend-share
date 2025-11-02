@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { IGroup } from "@/lib/models/Group";
+import { groupsApi, Group } from "@/lib/api/groups";
 
 const createGroupSchema = z.object({
   name: z.string().min(1, "Group name is required").max(100, "Name too long"),
@@ -38,7 +38,7 @@ const createGroupSchema = z.object({
 type CreateGroupFormData = z.infer<typeof createGroupSchema>;
 
 interface CreateGroupFormProps {
-  onSuccess: (group: IGroup) => void;
+  onSuccess: (group: Group) => void;
   onCancel?: () => void;
 }
 
@@ -59,26 +59,14 @@ export function CreateGroupForm({ onSuccess, onCancel }: CreateGroupFormProps) {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/groups", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const group = await groupsApi.create(data);
 
       toast({
         title: "Success",
         description: "Group created successfully",
       });
 
-      onSuccess(result.data);
+      onSuccess(group);
       form.reset();
     } catch (error) {
       toast({

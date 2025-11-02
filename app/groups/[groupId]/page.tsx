@@ -16,84 +16,9 @@ import { PersonMediaGallery } from "@/components/media/PersonMediaGallery";
 // import { JobNotifications } from "@/components/media/JobNotifications";
 import { ClusterStats } from "@/components/media/ClusterStats";
 import { MediaFilters } from "@/components/media/MediaFilters";
-
-interface Group {
-  _id: string;
-  name: string;
-  description?: string;
-  members: Array<{
-    userId: {
-      name?: string;
-      email: string;
-    };
-    role: string;
-  }>;
-  storageUsed: number;
-  storageLimit: number;
-}
-
-interface MediaItem {
-  _id: string;
-  filename: string;
-  originalName: string;
-  cloudinaryUrl: string;
-  createdAt: string;
-  uploader: {
-    name?: string;
-    email: string;
-  };
-  fileSize: number;
-  processed: boolean;
-}
-
-interface FaceCluster {
-  _id: string;
-  clusterName?: string;
-  appearanceCount: number;
-  confidence: number;
-  createdAt: string;
-  samplePhoto?: {
-    cloudinaryUrl: string;
-    boundingBox: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-  };
-  totalPhotos: number;
-}
-
-// Add these interfaces at the top
-interface MediaWithFaces {
-  _id: string;
-  filename: string;
-  originalName: string;
-  cloudinaryUrl: string;
-  createdAt: string;
-  uploader: {
-    name?: string;
-    email: string;
-  };
-  fileSize: number;
-  processed: boolean;
-  faceDetections: Array<{
-    _id: string;
-    boundingBox: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-    confidence: number;
-  }>;
-}
-
-interface ClusterInfo {
-  _id: string;
-  clusterName?: string;
-  appearanceCount: number;
-}
+import { groupsApi, Group } from "@/lib/api/groups";
+import { mediaApi, Media } from "@/lib/api/media";
+import { clustersApi, Cluster, MediaWithFaceInfo } from "@/lib/api/clusters";
 
 export default function GroupDetailPage() {
   const params = useParams();
@@ -101,30 +26,30 @@ export default function GroupDetailPage() {
   const groupId = params.groupId as string;
 
   const [group, setGroup] = useState<Group | null>(null);
-  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [media, setMedia] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [mediaLoading, setMediaLoading] = useState(false);
-  const [clusters, setClusters] = useState<FaceCluster[]>([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [clustersLoading, setClustersLoading] = useState(false);
 
   // Add these new state variables after the existing ones
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
-  const [clusterMedia, setClusterMedia] = useState<MediaWithFaces[]>([]);
+  const [clusterMedia, setClusterMedia] = useState<MediaWithFaceInfo[]>([]);
   const [clusterMediaLoading, setClusterMediaLoading] = useState(false);
-  const [clusterInfo, setClusterInfo] = useState<ClusterInfo | null>(null);
+  const [clusterInfo, setClusterInfo] = useState<{
+    id: string;
+    clusterName?: string;
+    appearanceCount: number;
+  } | null>(null);
 
   // Add this function to load cluster-specific media
   const loadClusterMedia = useCallback(
     async (clusterId: string): Promise<void> => {
       setClusterMediaLoading(true);
       try {
-        const response = await fetch(`/api/clusters/${clusterId}/media`);
-        const result = await response.json();
-
-        if (result.success) {
-          setClusterMedia(result.data.media || []);
-          setClusterInfo(result.data.cluster);
-        }
+        const result = await clustersApi.getClusterMedia(clusterId);
+        setClusterMedia(result.media || []);
+        setClusterInfo(result.cluster);
       } catch (error) {
         console.error("Failed to load cluster media:", error);
       } finally {
@@ -151,12 +76,8 @@ export default function GroupDetailPage() {
   const loadClusters = useCallback(async (): Promise<void> => {
     setClustersLoading(true);
     try {
-      const response = await fetch(`/api/groups/${groupId}/clusters`);
-      const result = await response.json();
-
-      if (result.success) {
-        setClusters(result.data || []);
-      }
+      const clusters = await clustersApi.listByGroup(groupId);
+      setClusters(clusters || []);
     } catch (error) {
       console.error("Failed to load clusters:", error);
     } finally {
@@ -166,12 +87,8 @@ export default function GroupDetailPage() {
 
   const loadGroup = useCallback(async (): Promise<void> => {
     try {
-      const response = await fetch(`/api/groups/${groupId}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setGroup(result.data);
-      }
+      const group = await groupsApi.getById(groupId);
+      setGroup(group);
     } catch (error) {
       console.error("Failed to load group:", error);
     } finally {
@@ -182,12 +99,8 @@ export default function GroupDetailPage() {
   const loadMedia = useCallback(async (): Promise<void> => {
     setMediaLoading(true);
     try {
-      const response = await fetch(`/api/groups/${groupId}/media`);
-      const result = await response.json();
-
-      if (result.success) {
-        setMedia(result.data.media || []);
-      }
+      const response = await mediaApi.listByGroup(groupId);
+      setMedia(response.data || []);
     } catch (error) {
       console.error("Failed to load media:", error);
     } finally {
@@ -200,16 +113,8 @@ export default function GroupDetailPage() {
     updates: { clusterName?: string }
   ): Promise<void> => {
     try {
-      const response = await fetch(`/api/clusters/${clusterId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        await loadClusters(); // Refresh clusters
-      }
+      await clustersApi.updateCluster(clusterId, updates);
+      await loadClusters(); // Refresh clusters
     } catch (error) {
       console.error("Failed to update cluster:", error);
     }
@@ -217,14 +122,8 @@ export default function GroupDetailPage() {
 
   const handleClusterDelete = async (clusterId: string): Promise<void> => {
     try {
-      const response = await fetch(`/api/clusters/${clusterId}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        await loadClusters(); // Refresh clusters
-      }
+      await clustersApi.deleteCluster(clusterId);
+      await loadClusters(); // Refresh clusters
     } catch (error) {
       console.error("Failed to delete cluster:", error);
     }
@@ -429,18 +328,18 @@ export default function GroupDetailPage() {
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                      {(member.userId.name || member.userId.email).charAt(0).toUpperCase()}
+                      {(member.userId?.name || member.userId?.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {member.userId.name || member.userId.email.split("@")[0]}
+                        {member.userId?.name || member.userId?.email?.split("@")[0] || 'Unknown User'}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {member.userId.email}
+                        {member.userId?.email || 'No email'}
                       </p>
                     </div>
                     <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-1 rounded-full capitalize">
-                      {member.role.toLowerCase()}
+                      {member.role?.toLowerCase() || 'member'}
                     </span>
                   </div>
                 ))}

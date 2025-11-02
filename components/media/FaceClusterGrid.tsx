@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -15,28 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Edit2, Save, X, Trash2 } from "lucide-react";
-
-interface FaceCluster {
-  _id: string;
-  clusterName?: string;
-  appearanceCount: number;
-  confidence: number;
-  createdAt: string;
-  samplePhoto?: {
-    cloudinaryUrl: string;
-    s3Key?: string;
-    boundingBox: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-  };
-  totalPhotos: number;
-}
+import { Cluster } from "@/lib/api/clusters";
 
 interface FaceClusterGridProps {
-  clusters: FaceCluster[];
+  clusters: Cluster[];
   loading?: boolean;
   onClusterSelect: (clusterId: string) => void;
   onClusterUpdate: (
@@ -59,8 +39,8 @@ export function FaceClusterGrid({
   const [editName, setEditName] = useState("");
   const { toast } = useToast();
 
-  const startEditing = (cluster: FaceCluster): void => {
-    setEditingCluster(cluster._id);
+  const startEditing = (cluster: Cluster): void => {
+    setEditingCluster(cluster.id);
     setEditName(cluster.clusterName || "");
   };
 
@@ -107,7 +87,7 @@ export function FaceClusterGrid({
   };
 
   // Component to crop and display face from full image
-  const FaceThumbnail = ({ cluster }: { cluster: FaceCluster }) => {
+  const FaceThumbnail = ({ cluster }: { cluster: Cluster }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [croppedImage, setCroppedImage] = useState<string>("");
     const [loading, setLoading] = useState(true);
@@ -119,14 +99,14 @@ export function FaceClusterGrid({
         return;
       }
 
-      const { cloudinaryUrl, s3Key, boundingBox } = cluster.samplePhoto;
-      if (!cloudinaryUrl || !boundingBox) {
+      const { url, s3Key, boundingBox } = cluster.samplePhoto;
+      if (!url || !boundingBox) {
         setLoading(false);
         return;
       }
 
       // Determine which URL to use
-      let imageUrl = cloudinaryUrl;
+      let imageUrl = url;
       if (useProxy && s3Key) {
         imageUrl = `/api/media/proxy?key=${encodeURIComponent(s3Key)}`;
       }
@@ -156,7 +136,7 @@ export function FaceClusterGrid({
           const imgWidth = img.naturalWidth || img.width;
           const imgHeight = img.naturalHeight || img.height;
 
-          console.log(`Processing face for cluster ${cluster._id}:`, {
+          console.log(`Processing face for cluster ${cluster.id}:`, {
             imageSize: { width: imgWidth, height: imgHeight },
             boundingBox,
             url: imageUrl.substring(0, 50) + "...",
@@ -211,7 +191,7 @@ export function FaceClusterGrid({
           // Convert to data URL
           const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
           console.log(
-            `Successfully cropped face for ${cluster._id}, data URL length:`,
+            `Successfully cropped face for ${cluster.id}, data URL length:`,
             dataUrl.length
           );
           setCroppedImage(dataUrl);
@@ -227,7 +207,7 @@ export function FaceClusterGrid({
           url: imageUrl,
           useProxy,
           error,
-          clusterId: cluster._id,
+          clusterId: cluster.id,
         });
 
         // If direct S3 URL failed and we haven't tried proxy yet, try proxy
@@ -286,7 +266,8 @@ export function FaceClusterGrid({
           <div>
             <h3 className="font-semibold text-gray-900">People in Photos</h3>
             <p className="text-xs text-gray-500">
-              {clusters.length} {clusters.length === 1 ? "person" : "people"} detected
+              {clusters.length} {clusters.length === 1 ? "person" : "people"}{" "}
+              detected
             </p>
           </div>
         </div>
@@ -301,7 +282,9 @@ export function FaceClusterGrid({
         <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-purple-50 rounded-xl border-2 border-dashed border-gray-200">
           <Users className="mx-auto h-12 w-12 mb-3 text-gray-300" />
           <p className="text-gray-600 font-medium">No people detected yet</p>
-          <p className="text-sm text-gray-500 mt-1">Upload photos with faces to get started!</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Upload photos with faces to get started!
+          </p>
         </div>
       ) : (
         <div className="relative">
@@ -309,11 +292,8 @@ export function FaceClusterGrid({
           <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             <div className="flex gap-3 min-w-min">
               {clusters.map((cluster) => (
-                <div
-                  key={cluster._id}
-                  className="flex-shrink-0 w-32 group"
-                >
-                  {editingCluster === cluster._id ? (
+                <div key={cluster.id} className="flex-shrink-0 w-32 group">
+                  {editingCluster === cluster.id ? (
                     /* Edit Mode */
                     <div className="bg-white border-2 border-purple-500 rounded-xl p-3 shadow-lg">
                       <Input
@@ -323,14 +303,14 @@ export function FaceClusterGrid({
                         className="text-xs mb-2 h-8"
                         placeholder="Name"
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") saveClusterName(cluster._id);
+                          if (e.key === "Enter") saveClusterName(cluster.id);
                           if (e.key === "Escape") cancelEditing();
                         }}
                         autoFocus
                       />
                       <div className="flex gap-1">
                         <Button
-                          onClick={() => saveClusterName(cluster._id)}
+                          onClick={() => saveClusterName(cluster.id)}
                           size="sm"
                           className="flex-1 h-7 text-xs"
                         >
@@ -352,7 +332,7 @@ export function FaceClusterGrid({
                       {/* Face Image */}
                       <div
                         className="relative aspect-square cursor-pointer overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200"
-                        onClick={() => onClusterSelect(cluster._id)}
+                        onClick={() => onClusterSelect(cluster.id)}
                       >
                         <FaceThumbnail cluster={cluster} />
 
@@ -365,11 +345,13 @@ export function FaceClusterGrid({
 
                         {/* Confidence Badge (on hover) */}
                         <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            cluster.confidence > 0.7
-                              ? "bg-green-500 text-white"
-                              : "bg-yellow-500 text-white"
-                          }`}>
+                          <div
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                              cluster.confidence > 0.7
+                                ? "bg-green-500 text-white"
+                                : "bg-yellow-500 text-white"
+                            }`}
+                          >
                             {Math.round(cluster.confidence * 100)}%
                           </div>
                         </div>
@@ -379,12 +361,13 @@ export function FaceClusterGrid({
                       <div className="p-2">
                         <p
                           className="text-xs font-semibold text-gray-900 truncate cursor-pointer hover:text-purple-600"
-                          onClick={() => onClusterSelect(cluster._id)}
+                          onClick={() => onClusterSelect(cluster.id)}
                         >
                           {cluster.clusterName || "Unknown"}
                         </p>
                         <p className="text-[10px] text-gray-500 mt-0.5">
-                          {cluster.totalPhotos} {cluster.totalPhotos === 1 ? "photo" : "photos"}
+                          {cluster.totalPhotos}{" "}
+                          {cluster.totalPhotos === 1 ? "photo" : "photos"}
                         </p>
 
                         {/* Action Buttons */}
@@ -418,18 +401,23 @@ export function FaceClusterGrid({
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <p className="text-sm text-gray-600">
-                                    Delete {cluster.clusterName || "this person"}? This cannot be undone.
+                                    Delete{" "}
+                                    {cluster.clusterName || "this person"}? This
+                                    cannot be undone.
                                   </p>
                                   <div className="flex gap-2">
                                     <Button
-                                      onClick={() => handleDelete(cluster._id)}
+                                      onClick={() => handleDelete(cluster.id)}
                                       variant="destructive"
                                       className="flex-1"
                                     >
                                       Delete
                                     </Button>
                                     <DialogTrigger asChild>
-                                      <Button variant="outline" className="flex-1">
+                                      <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                      >
                                         Cancel
                                       </Button>
                                     </DialogTrigger>

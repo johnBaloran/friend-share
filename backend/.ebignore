@@ -1,0 +1,18 @@
+# Elastic Beanstalk ignore file
+
+node_modules
+.env
+.env.local
+.env.development
+.git
+.gitignore
+README.md
+.DS_Store
+*.log
+coverage
+.vscode
+.idea
+src
+*.ts
+!dist/**/*
+tsconfig.json

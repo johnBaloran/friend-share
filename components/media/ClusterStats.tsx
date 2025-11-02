@@ -6,18 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, Camera, TrendingUp, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface FaceCluster {
-  _id: string;
-  clusterName?: string;
-  appearanceCount: number;
-  confidence: number;
-  createdAt: string;
-  totalPhotos: number;
-}
+import { groupsApi } from "@/lib/api/groups";
+import { Cluster } from "@/lib/api/clusters";
 
 interface ClusterStatsProps {
-  clusters: FaceCluster[];
+  clusters: Cluster[];
   totalMedia: number;
   loading?: boolean;
   groupId?: string;
@@ -39,25 +32,19 @@ export function ClusterStats({
 
     setReclustering(true);
     try {
-      const response = await fetch(`/api/groups/${groupId}/recluster`, {
-        method: "POST",
+      const result = await groupsApi.recluster(groupId);
+      toast({
+        title: "Success",
+        description: result.message || "Face reclustering job started",
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: `Re-clustered ${result.data.totalClusters} groups from ${result.data.totalFaces} faces`,
-        });
-        onReclusterComplete?.();
-      } else {
-        throw new Error(result.error || "Failed to re-cluster");
-      }
+      onReclusterComplete?.();
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to re-cluster faces",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to start reclustering",
         variant: "destructive",
       });
     } finally {
@@ -86,18 +73,6 @@ export function ClusterStats({
         clusters.length
       : 0;
 
-  // Get unique photo count by finding max totalPhotos across clusters
-  // (since totalPhotos represents unique photos per cluster)
-  const uniquePhotosWithFaces = clusters.length > 0
-    ? Math.max(...clusters.map(c => c.totalPhotos))
-    : 0;
-
-  // More accurate: if we have faces detected, assume all photos have faces
-  // (since face detection was run on all uploaded photos)
-  const photosWithFaces = totalFaces > 0 ? totalMedia : 0;
-  const coveragePercentage =
-    totalMedia > 0 ? Math.round((photosWithFaces / totalMedia) * 100) : 0;
-
   const topPerson =
     clusters.length > 0
       ? clusters.reduce((max, cluster) =>
@@ -117,7 +92,9 @@ export function ClusterStats({
             disabled={reclustering}
             className="h-8"
           >
-            <RefreshCw className={`h-3 w-3 mr-1 ${reclustering ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-3 w-3 mr-1 ${reclustering ? "animate-spin" : ""}`}
+            />
             {reclustering ? "Re-clustering..." : "Re-cluster"}
           </Button>
         )}

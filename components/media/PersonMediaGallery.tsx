@@ -7,41 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Download, User, Calendar, FileImage } from "lucide-react";
-
-interface FaceDetection {
-  _id: string;
-  boundingBox: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-  confidence: number;
-}
-
-interface MediaWithFaces {
-  _id: string;
-  filename: string;
-  originalName: string;
-  cloudinaryUrl: string;
-  createdAt: string;
-  uploader: {
-    name?: string;
-    email: string;
-  };
-  fileSize: number;
-  processed: boolean;
-  faceDetections: FaceDetection[];
-}
+import { MediaWithFaceInfo } from "@/lib/api/clusters";
 
 interface ClusterInfo {
-  _id: string;
+  id: string;
   clusterName?: string;
   appearanceCount: number;
 }
 
 interface PersonMediaGalleryProps {
-  media: MediaWithFaces[];
+  media: MediaWithFaceInfo[];
   cluster: ClusterInfo;
   loading?: boolean;
   onBack: () => void;
@@ -71,7 +46,7 @@ export function PersonMediaGallery({
     if (selectedMedia.size === media.length) {
       setSelectedMedia(new Set());
     } else {
-      setSelectedMedia(new Set(media.map((m) => m._id)));
+      setSelectedMedia(new Set(media.map((m) => m.id)));
     }
   };
 
@@ -82,19 +57,10 @@ export function PersonMediaGallery({
     }
   };
 
-  const generateCroppedFaceUrl = (mediaItem: MediaWithFaces): string => {
-    if (mediaItem.faceDetections.length === 0) return mediaItem.cloudinaryUrl;
-
-    // Use the first face detection for the crop
-    const face = mediaItem.faceDetections[0];
-    const { x, y, width, height } = face.boundingBox;
-
-    // Create Cloudinary crop transformation for face preview
-    const baseUrl = mediaItem.cloudinaryUrl.replace(
-      "/upload/",
-      `/upload/c_crop,x_${x},y_${y},w_${width},h_${height}/c_fill,w_150,h_150/`
-    );
-    return baseUrl;
+  const generateCroppedFaceUrl = (mediaItem: MediaWithFaceInfo): string => {
+    // For now, just return the presigned URL
+    // Face cropping can be implemented client-side or with a different image service
+    return mediaItem.presignedUrl || mediaItem.url;
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -176,7 +142,7 @@ export function PersonMediaGallery({
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {media.map((item) => (
-              <div key={item._id} className="relative group">
+              <div key={item.id} className="relative group">
                 <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative">
                   {/* Face crop preview */}
                   <div className="absolute top-2 left-2 z-10">
@@ -193,7 +159,7 @@ export function PersonMediaGallery({
 
                   {/* Full image */}
                   <img
-                    src={item.cloudinaryUrl}
+                    src={item.presignedUrl || item.url}
                     alt={item.originalName}
                     className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     loading="lazy"
@@ -203,13 +169,13 @@ export function PersonMediaGallery({
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity">
                     <div className="absolute top-2 right-2">
                       <Checkbox
-                        checked={selectedMedia.has(item._id)}
-                        onCheckedChange={() => toggleSelection(item._id)}
+                        checked={selectedMedia.has(item.id)}
+                        onCheckedChange={() => toggleSelection(item.id)}
                         className="bg-white"
                       />
                     </div>
 
-                    {!item.processed && (
+                    {!item.isProcessed && (
                       <div className="absolute bottom-2 left-2">
                         <Badge variant="secondary" className="text-xs">
                           Processing...

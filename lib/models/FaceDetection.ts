@@ -21,6 +21,12 @@ export interface IFaceDetection extends Document {
     pitch: number; // Looking up/down (-180 to 180)
   };
   qualityScore?: number; // Computed overall quality (0-100)
+  enhancedFace?: {
+    s3Key: string;      // S3 key for enhanced face image
+    s3Bucket: string;   // S3 bucket for enhanced face
+    width: number;      // Enhanced image width (typically 600)
+    height: number;     // Enhanced image height (typically 600)
+  };
   processed: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -59,6 +65,12 @@ const faceDetectionSchema = new Schema<IFaceDetection>(
     qualityScore: {
       type: Number,
       index: true, // Index for efficient sorting by quality
+    },
+    enhancedFace: {
+      s3Key: { type: String },
+      s3Bucket: { type: String },
+      width: { type: Number },
+      height: { type: Number },
     },
     processed: {
       type: Boolean,

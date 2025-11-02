@@ -5,28 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Image, Download, Grid, List, Calendar, User } from "lucide-react";
+import { Image, Download, Grid, List, Calendar } from "lucide-react";
 import { useDownload } from "@/lib/hooks/useDownload";
-
-interface MediaItem {
-  _id: string;
-  filename: string;
-  originalName: string;
-  cloudinaryUrl: string;
-  createdAt: string;
-  uploader: {
-    name?: string;
-    email: string;
-  };
-  fileSize: number;
-  processed: boolean;
-}
+import { Media } from "@/lib/api/media";
 
 interface MediaGalleryProps {
-  media: MediaItem[];
+  media: Media[];
   loading?: boolean;
-  groupId: string; // Add this
-
+  groupId: string;
   onDownload?: (mediaIds: string[]) => void;
   selectedCluster?: string;
 }
@@ -56,7 +42,7 @@ export function MediaGallery({
     if (selectedMedia.size === media.length) {
       setSelectedMedia(new Set());
     } else {
-      setSelectedMedia(new Set(media.map((m) => m._id)));
+      setSelectedMedia(new Set(media.map((m) => m.id)));
     }
   };
 
@@ -152,10 +138,10 @@ export function MediaGallery({
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {media.map((item) => (
-              <div key={item._id} className="relative group">
+              <div key={item.id} className="relative group">
                 <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
                   <img
-                    src={item.cloudinaryUrl}
+                    src={item.presignedUrl || item.url}
                     alt={item.originalName}
                     className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     loading="lazy"
@@ -165,13 +151,13 @@ export function MediaGallery({
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg">
                   <div className="absolute top-2 left-2">
                     <Checkbox
-                      checked={selectedMedia.has(item._id)}
-                      onCheckedChange={() => toggleSelection(item._id)}
+                      checked={selectedMedia.has(item.id)}
+                      onCheckedChange={() => toggleSelection(item.id)}
                       className="bg-white"
                     />
                   </div>
 
-                  {!item.processed && (
+                  {!item.isProcessed && (
                     <div className="absolute top-2 right-2">
                       <Badge variant="secondary" className="text-xs">
                         Processing...
@@ -195,17 +181,17 @@ export function MediaGallery({
           <div className="space-y-2">
             {media.map((item) => (
               <div
-                key={item._id}
+                key={item.id}
                 className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg"
               >
                 <Checkbox
-                  checked={selectedMedia.has(item._id)}
-                  onCheckedChange={() => toggleSelection(item._id)}
+                  checked={selectedMedia.has(item.id)}
+                  onCheckedChange={() => toggleSelection(item.id)}
                 />
 
                 <div className="w-12 h-12 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                   <img
-                    src={item.cloudinaryUrl}
+                    src={item.presignedUrl || item.url}
                     alt={item.originalName}
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -215,17 +201,13 @@ export function MediaGallery({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-medium truncate">{item.originalName}</p>
-                    {!item.processed && (
+                    {!item.isProcessed && (
                       <Badge variant="secondary" className="text-xs">
                         Processing...
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      {item.uploader.name || item.uploader.email}
-                    </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {new Date(item.createdAt).toLocaleDateString()}

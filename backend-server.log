@@ -1,0 +1,748 @@
+
+> face-media-backend@1.0.0 dev
+> tsx watch src/index.ts
+
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+[0mGET /health [32m200[0m 20.675 ms - 82[0m
+1:07:35 AM [tsx] change in ./src\di\container.ts Restarting...
+c1:07:37 AM [tsx] change in ./src\di\container.ts Restarting...
+c1:07:43 AM [tsx] change in ./src\presentation\routes\index.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:10:43 AM [tsx] change in ./src\infrastructure\database\mongoose\repositories\FaceDetectionRepository.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:11:30 AM [tsx] change in ./src\di\container.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:11:37 AM [tsx] change in ./src\di\container.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:11:44 AM [tsx] change in ./src\di\container.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:11:49 AM [tsx] change in ./src\presentation\routes\index.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:12:46 AM [tsx] change in ./src\core\use-cases\GetClustersWithSamplesUseCase.ts Restarting...
+c1:12:47 AM [tsx] change in ./src\core\use-cases\GetClusterMediaUseCase.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:15:31 AM [tsx] change in ./src\infrastructure\queue\BullMQService.ts Restarting...
+c1:15:32 AM [tsx] change in ./src\infrastructure\queue\BullMQService.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:16:11 AM [tsx] change in ./src\di\container.ts Restarting...
+c1:16:13 AM [tsx] change in ./src\di\container.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:16:20 AM [tsx] change in ./src\presentation\routes\index.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:17:12 AM [tsx] change in ./src\presentation\controllers\JobController.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:21:09 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:21:15 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Restarting...
+cC:\Users\john.baloran\Desktop\face-media-sharing\backend\src\presentation\controllers\GroupController.ts:8
+import { MemberRole } from '../../core/entities/Group.js';
+         ^
+
+SyntaxError: The requested module '../../core/entities/Group.js' does not provide an export named 'MemberRole'
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:228:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:337:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.20.0
+1:21:35 AM [tsx] change in ./src\presentation\routes\groupRoutes.ts Rerunning...
+cC:\Users\john.baloran\Desktop\face-media-sharing\backend\src\presentation\controllers\GroupController.ts:8
+import { MemberRole } from '../../core/entities/Group.js';
+         ^
+
+SyntaxError: The requested module '../../core/entities/Group.js' does not provide an export named 'MemberRole'
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:228:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:337:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.20.0
+1:21:41 AM [tsx] change in ./src\di\container.ts Rerunning...
+cC:\Users\john.baloran\Desktop\face-media-sharing\backend\src\presentation\controllers\GroupController.ts:8
+import { MemberRole } from '../../core/entities/Group.js';
+         ^
+
+SyntaxError: The requested module '../../core/entities/Group.js' does not provide an export named 'MemberRole'
+    at ModuleJob._instantiate (node:internal/modules/esm/module_job:228:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:337:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.20.0
+1:22:49 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Rerunning...
+c1:22:50 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Restarting...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+[0mGET /api/groups?page=1&limit=10 [36m302[0m 28.149 ms - 23[0m
+[0mGET / [33m404[0m 6.737 ms - 43[0m
+1:33:35 AM [tsx] change in ./src\index.ts Rerunning...
+cnode:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:80:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+1:35:35 AM [tsx] change in ./src\infrastructure\database\mongoose\models\GroupModel.ts Rerunning...
+c
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:35:42 AM [tsx] change in ./src\infrastructure\database\mongoose\models\GroupModel.ts Restarting...
+c(node:11376) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:80:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+1:35:58 AM [tsx] change in ./src\infrastructure\database\mongoose\models\GroupModel.ts Rerunning...
+c(node:11672) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:36:20 AM [tsx] change in ./src\infrastructure\database\mongoose\models\MediaModel.ts Restarting...
+c1:36:22 AM [tsx] change in ./src\infrastructure\database\mongoose\models\MediaModel.ts Restarting...
+c(node:14316) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:80:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+1:36:57 AM [tsx] change in ./src\presentation\controllers\JobController.ts Rerunning...
+c(node:7516) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:80:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+1:37:48 AM [tsx] change in ./src\presentation\controllers\JobController.ts Rerunning...
+c1:37:50 AM [tsx] change in ./src\infrastructure\database\mongoose\models\GroupModel.ts Restarting...
+c1:37:52 AM [tsx] change in ./src\index.ts Restarting...
+c(node:18648) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:38:17 AM [tsx] change in ./src\index.ts Restarting...
+cC:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:50
+app.use(env.get('API_PREFIX'), requireAuth(), routes);
+            ^
+
+
+ReferenceError: requireAuth is not defined
+    at <anonymous> (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:50:13)
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.20.0
+1:38:25 AM [tsx] change in ./src\index.ts Rerunning...
+c(node:15176) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+1:39:13 AM [tsx] change in ./src\presentation\middleware\clerkAuth.ts Restarting...
+c(node:10420) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+Clerk - DEPRECATION WARNING: "req.auth" is deprecated and will be removed in the next major release.
+Use `req.auth()` as a function instead.
+[0mGET /api/groups?page=1&limit=10 [32m200[0m 286.314 ms - 86[0m
+[0mGET /api/groups?page=1&limit=10 [32m200[0m 62.750 ms - 86[0m
+2:05:08 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Restarting...
+c(node:8304) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+2:05:35 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Rerunning...
+c(node:17820) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+2:05:51 AM [tsx] change in ./src\presentation\routes\groupRoutes.ts Restarting...
+c(node:7376) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+2:06:13 AM [tsx] change in ./src\di\container.ts Rerunning...
+c(node:18452) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+2:06:54 AM [tsx] change in ./src\infrastructure\database\mongoose\repositories\MediaRepository.ts Restarting...
+c(node:8960) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+2:09:25 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Rerunning...
+c(node:18836) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:28:18 AM [tsx] change in ./src\infrastructure\database\mongoose\models\GroupModel.ts Rerunning...
+c(node:15436) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:29:40 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Rerunning...
+c(node:1600) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:30:23 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Rerunning...
+c(node:2536) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:30:37 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Rerunning...
+c(node:12444) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+9:30:46 AM [tsx] change in ./src\presentation\controllers\GroupController.ts Restarting...
+c(node:17960) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:31:07 AM [tsx] change in ./src\di\container.ts Rerunning...
+c(node:14628) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+9:32:15 AM [tsx] change in ./src\presentation\middleware\clerkAuth.ts Restarting...
+c(node:5392) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+9:40:22 AM [tsx] change in ./src\infrastructure\external\ClerkService.ts Restarting...
+c(node:17116) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+9:40:37 AM [tsx] change in ./src\infrastructure\external\ClerkService.ts Restarting...
+c(node:16492) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:40:56 AM [tsx] change in ./src\di\container.ts Rerunning...
+c(node:8840) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:41:05 AM [tsx] change in ./src\di\container.ts Rerunning...
+c(node:9228) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+9:41:26 AM [tsx] change in ./src\presentation\routes\index.ts Rerunning...
+c(node:11360) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+9:41:34 AM [tsx] change in ./src\presentation\routes\index.ts Restarting...
+c(node:12320) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:70:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0

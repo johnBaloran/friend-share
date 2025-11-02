@@ -25,16 +25,13 @@ import {
   Upload,
 } from "lucide-react";
 import { format } from "date-fns";
+import { Cluster } from "@/lib/api/clusters";
 
 interface MediaFiltersProps {
   onFiltersChange: (filters: MediaFilterOptions) => void;
   totalMedia: number;
   filteredCount: number;
-  clusters: Array<{
-    _id: string;
-    clusterName?: string;
-    appearanceCount: number;
-  }>;
+  clusters: Cluster[];
 }
 
 interface MediaFilterOptions {
@@ -128,7 +125,7 @@ export function MediaFilters({
             <SelectContent>
               <SelectItem value="all">All people</SelectItem>
               {clusters.map((cluster) => (
-                <SelectItem key={cluster._id} value={cluster._id}>
+                <SelectItem key={cluster.id} value={cluster.id}>
                   <div className="flex items-center justify-between w-full">
                     <span>{cluster.clusterName || "Unknown Person"}</span>
                     <Badge variant="secondary" className="ml-2 text-xs">
@@ -223,7 +220,7 @@ export function MediaFilters({
                   <span>Person</span>
                 </div>
                 <span className="text-xs text-gray-500">
-                  {clusters.find((c) => c._id === filters.clusterId)
+                  {clusters.find((c) => c.id === filters.clusterId)
                     ?.clusterName || "Unknown"}
                 </span>
               </div>

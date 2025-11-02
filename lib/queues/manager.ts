@@ -60,7 +60,7 @@ export class QueueManager {
   static async addFaceDetectionJob(
     data: FaceDetectionJobData
   ): Promise<string> {
-    const job = await faceDetectionQueue.add("detect-faces", data, {
+    const job = await faceDetectionQueue.add("FACE_DETECTION", data, {
       priority: 5,
       removeOnComplete: { count: 10 },
       removeOnFail: { count: 5 },
@@ -91,7 +91,7 @@ export class QueueManager {
   }
 
   static async addFaceGroupingJob(data: FaceGroupingJobData): Promise<string> {
-    const job = await faceGroupingQueue.add("group-faces", data, {
+    const job = await faceGroupingQueue.add("FACE_GROUPING", data, {
       priority: 10, // High priority due to 24h expiration
       removeOnComplete: { count: 10 },
       removeOnFail: { count: 5 },
@@ -125,7 +125,7 @@ export class QueueManager {
     data: CleanupJobData,
     delay?: number
   ): Promise<string> {
-    const job = await cleanupQueue.add("cleanup-media", data, {
+    const job = await cleanupQueue.add("MEDIA_CLEANUP", data, {
       delay,
       priority: 1,
       removeOnComplete: { count: 5 },

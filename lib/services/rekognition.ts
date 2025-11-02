@@ -91,9 +91,9 @@ export async function createCollection(groupId: string): Promise<string> {
     );
 
     return collectionId;
-  } catch (error: any) {
+  } catch (error) {
     // Collection might already exist
-    if (error.name === "ResourceAlreadyExistsException") {
+    if (error instanceof Error && error.name === "ResourceAlreadyExistsException") {
       console.log(`Collection ${collectionId} already exists`);
       return collectionId;
     }
@@ -115,8 +115,8 @@ export async function deleteCollection(collectionId: string): Promise<void> {
 
     await rekognitionClient.send(command);
     console.log(`Deleted Rekognition collection: ${collectionId}`);
-  } catch (error: any) {
-    if (error.name === "ResourceNotFoundException") {
+  } catch (error) {
+    if (error instanceof Error && error.name === "ResourceNotFoundException") {
       console.log(`Collection ${collectionId} not found, already deleted`);
       return;
     }
@@ -138,8 +138,8 @@ export async function collectionExists(collectionId: string): Promise<boolean> {
 
     await rekognitionClient.send(command);
     return true;
-  } catch (error: any) {
-    if (error.name === "ResourceNotFoundException") {
+  } catch (error) {
+    if (error instanceof Error && error.name === "ResourceNotFoundException") {
       return false;
     }
     throw error;
@@ -185,26 +185,52 @@ export async function detectFaces(
 }
 
 /**
- * Index faces in an image to a collection
+ * Index faces in an image to a collection (from S3)
  */
 export async function indexFaces(
   collectionId: string,
   s3Bucket: string,
   s3Key: string,
   externalImageId?: string
+): Promise<RekognitionIndexResult[]>;
+
+/**
+ * Index faces in an image to a collection (from bytes)
+ */
+export async function indexFaces(
+  collectionId: string,
+  imageBytes: Buffer,
+  externalImageId: string
+): Promise<RekognitionIndexResult[]>;
+
+/**
+ * Index faces in an image to a collection
+ */
+export async function indexFaces(
+  collectionId: string,
+  s3BucketOrBytes: string | Buffer,
+  s3KeyOrExternalId: string,
+  externalImageId?: string
 ): Promise<RekognitionIndexResult[]> {
   const rekognitionClient = getClient();
 
   try {
+    // Determine if we're using S3 or Bytes
+    const isBytes = Buffer.isBuffer(s3BucketOrBytes);
+
     const command = new IndexFacesCommand({
       CollectionId: collectionId,
-      Image: {
-        S3Object: {
-          Bucket: s3Bucket,
-          Name: s3Key,
-        },
-      },
-      ExternalImageId: externalImageId,
+      Image: isBytes
+        ? {
+            Bytes: s3BucketOrBytes, // Use bytes directly
+          }
+        : {
+            S3Object: {
+              Bucket: s3BucketOrBytes, // S3 bucket
+              Name: s3KeyOrExternalId,  // S3 key
+            },
+          },
+      ExternalImageId: isBytes ? s3KeyOrExternalId : externalImageId,
       DetectionAttributes: ["ALL"],
       MaxFaces: 100,
       QualityFilter: "AUTO",
@@ -226,7 +252,7 @@ export async function indexFaces(
             height: detail.BoundingBox?.Height || 0,
           },
           confidence: detail.Confidence || 0,
-          imageId: record.Face!.ExternalImageId || externalImageId || "",
+          imageId: record.Face!.ExternalImageId || (isBytes ? s3KeyOrExternalId : externalImageId) || "",
           quality: detail.Quality ? {
             brightness: detail.Quality.Brightness || 0,
             sharpness: detail.Quality.Sharpness || 0,
@@ -239,7 +265,8 @@ export async function indexFaces(
         };
       });
   } catch (error) {
-    console.error(`Face indexing failed for ${s3Key}:`, error);
+    const source = Buffer.isBuffer(s3BucketOrBytes) ? "bytes" : s3KeyOrExternalId;
+    console.error(`Face indexing failed for ${source}:`, error);
     throw error;
   }
 }
@@ -279,9 +306,9 @@ export async function searchFacesByImage(
         similarity: match.Similarity || 0,
         imageId: match.Face!.ExternalImageId,
       }));
-  } catch (error: any) {
+  } catch (error) {
     // If no faces detected in the search image, return empty array
-    if (error.name === "InvalidParameterException") {
+    if (error instanceof Error && error.name === "InvalidParameterException") {
       console.log(`No faces found in search image: ${s3Key}`);
       return [];
     }

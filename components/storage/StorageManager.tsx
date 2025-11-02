@@ -23,37 +23,38 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
+import { groupsApi } from "@/lib/api/groups";
 
 interface StorageAnalytics {
   totalStorage: number;
   usedStorage: number;
   availableStorage: number;
   usagePercentage: number;
-  mediaByType: {
+  mediaByType?: {
     images: number;
     processed: number;
     unprocessed: number;
   };
-  largestFiles: Array<{
-    _id: string;
+  largestFiles?: Array<{
+    id: string;
     filename: string;
     originalName: string;
     fileSize: number;
     createdAt: string;
   }>;
-  oldestFiles: Array<{
-    _id: string;
+  oldestFiles?: Array<{
+    id: string;
     filename: string;
     originalName: string;
     createdAt: string;
     fileSize: number;
   }>;
-  duplicateCandidates: Array<{
+  duplicateCandidates?: Array<{
     filename: string;
     count: number;
     totalSize: number;
     items: Array<{
-      _id: string;
+      id: string;
       createdAt: string;
     }>;
   }>;
@@ -72,14 +73,23 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
 
   const loadAnalytics = async (): Promise<void> => {
     try {
-      const response = await fetch(`/api/groups/${groupId}/storage`);
-      const result = await response.json();
-
-      if (result.success) {
-        setAnalytics(result.data);
-      } else {
-        throw new Error(result.error);
-      }
+      const data = await groupsApi.getStorage(groupId);
+      // Map backend StorageInfo to StorageAnalytics
+      const analytics: StorageAnalytics = {
+        totalStorage: data.limit,
+        usedStorage: data.used,
+        availableStorage: data.limit - data.used,
+        usagePercentage: data.percentage,
+        mediaByType: {
+          images: data.files,
+          processed: 0, // Backend doesn't provide this yet
+          unprocessed: 0, // Backend doesn't provide this yet
+        },
+        largestFiles: [], // Backend doesn't provide this yet
+        oldestFiles: [], // Backend doesn't provide this yet
+        duplicateCandidates: [], // Backend doesn't provide this yet
+      };
+      setAnalytics(analytics);
     } catch (error) {
       console.error("Failed to load storage analytics:", error);
       toast({
@@ -121,48 +131,41 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
     setCleanupLoading(true);
 
     try {
-      const cleanupData: Record<string, unknown> = {};
+      const cleanupOptions: {
+        deleteOlderThan?: string;
+        deleteLargerThan?: number;
+        deleteUnprocessed?: boolean;
+        deleteDuplicates?: boolean;
+      } = {};
 
       switch (options.type) {
         case "duplicates":
-          cleanupData.deleteDuplicates = true;
+          cleanupOptions.deleteDuplicates = true;
           break;
         case "old":
           if (options.days) {
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - options.days);
-            cleanupData.deleteOlderThan = cutoffDate.toISOString();
+            cleanupOptions.deleteOlderThan = cutoffDate.toISOString();
           }
           break;
         case "large":
           if (options.size) {
-            cleanupData.deleteLargerThan = options.size;
+            cleanupOptions.deleteLargerThan = options.size;
           }
           break;
         case "unprocessed":
-          cleanupData.deleteUnprocessed = true;
+          cleanupOptions.deleteUnprocessed = true;
           break;
       }
 
-      const response = await fetch(`/api/groups/${groupId}/cleanup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(cleanupData),
+      const result = await groupsApi.cleanup(groupId, cleanupOptions);
+
+      toast({
+        title: "Cleanup Complete",
+        description: `Deleted ${result.deletedCount} files, freed ${Math.round(result.freedSpace / 1024 / 1024)} MB`,
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Cleanup Complete",
-          description: result.message,
-        });
-        await loadAnalytics(); // Refresh analytics
-      } else {
-        throw new Error(result.error);
-      }
+      await loadAnalytics(); // Refresh analytics
     } catch (error) {
       console.error("Cleanup failed:", error);
       toast({
@@ -229,19 +232,19 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold">
-                {analytics.mediaByType.images}
+                {analytics.mediaByType?.images || 0}
               </p>
               <p className="text-sm text-gray-500">Total Photos</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-green-600">
-                {analytics.mediaByType.processed}
+                {analytics.mediaByType?.processed || 0}
               </p>
               <p className="text-sm text-gray-500">Processed</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">
-                {analytics.mediaByType.unprocessed}
+                {analytics.mediaByType?.unprocessed || 0}
               </p>
               <p className="text-sm text-gray-500">Processing</p>
             </div>
@@ -261,7 +264,7 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Duplicates */}
-              {analytics.duplicateCandidates.length > 0 && (
+              {analytics.duplicateCandidates && analytics.duplicateCandidates.length > 0 && (
                 <div className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -333,7 +336,7 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
                     <span className="font-medium">Old Files</span>
                   </div>
                   <Badge variant="secondary">
-                    {analytics.oldestFiles.length}+ files
+                    {analytics.oldestFiles?.length || 0}+ files
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-600 mb-3">
@@ -388,24 +391,30 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {analytics.largestFiles.slice(0, 5).map((file) => (
-                <div
-                  key={file._id}
-                  className="flex justify-between items-center"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {file.originalName}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(file.createdAt).toLocaleDateString()}
-                    </p>
+              {analytics.largestFiles && analytics.largestFiles.length > 0 ? (
+                analytics.largestFiles.slice(0, 5).map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex justify-between items-center"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {file.originalName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(file.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="ml-2">
+                      {formatFileSize(file.fileSize)}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="ml-2">
-                    {formatFileSize(file.fileSize)}
-                  </Badge>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No file data available
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -417,24 +426,30 @@ export function StorageManager({ groupId, isAdmin }: StorageManagerProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {analytics.oldestFiles.slice(0, 5).map((file) => (
-                <div
-                  key={file._id}
-                  className="flex justify-between items-center"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {file.originalName}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(file.fileSize)}
-                    </p>
+              {analytics.oldestFiles && analytics.oldestFiles.length > 0 ? (
+                analytics.oldestFiles.slice(0, 5).map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex justify-between items-center"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {file.originalName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(file.fileSize)}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {new Date(file.createdAt).toLocaleDateString()}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    {new Date(file.createdAt).toLocaleDateString()}
-                  </Badge>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No file data available
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

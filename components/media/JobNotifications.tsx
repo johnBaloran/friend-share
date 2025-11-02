@@ -2,17 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { jobsApi, JobStatus } from "@/lib/api/jobs";
 
 interface JobNotificationsProps {
   groupId: string;
-}
-
-interface JobUpdate {
-  jobId: string;
-  jobType: string;
-  status: string;
-  progress: number;
-  metadata?: Record<string, unknown>;
 }
 
 export function JobNotifications({ groupId }: JobNotificationsProps) {
@@ -24,58 +17,54 @@ export function JobNotifications({ groupId }: JobNotificationsProps) {
   useEffect(() => {
     const checkJobUpdates = async (): Promise<void> => {
       try {
-        const response = await fetch(`/api/groups/${groupId}/jobs`);
-        const result = await response.json();
+        const jobs: JobStatus[] = await jobsApi.listByGroup(groupId);
 
-        if (result.success) {
-          const jobs: JobUpdate[] = result.data;
+        jobs.forEach((job) => {
+          const statusLower = job.status.toLowerCase();
+          if (
+            statusLower === "completed" &&
+            !lastProcessedJobs.has(job.id)
+          ) {
+            // Show completion notification
+            const facesDetected =
+              job.result && typeof job.result === 'object' && "facesDetected" in job.result
+                ? (job.result.facesDetected as number)
+                : 0;
 
-          jobs.forEach((job) => {
-            if (
-              job.status === "COMPLETED" &&
-              !lastProcessedJobs.has(job.jobId)
-            ) {
-              // Show completion notification
-              const facesDetected =
-                job.metadata && "facesDetected" in job.metadata
-                  ? (job.metadata.facesDetected as number)
-                  : 0;
+            const clustersCreated =
+              job.result && typeof job.result === 'object' && "clustersCreated" in job.result
+                ? (job.result.clustersCreated as number)
+                : 0;
 
-              const clustersCreated =
-                job.metadata && "clustersCreated" in job.metadata
-                  ? (job.metadata.clustersCreated as number)
-                  : 0;
-
-              let description = "";
-              if (job.jobType === "FACE_DETECTION") {
-                description = `Detected ${facesDetected} faces in your photos`;
-              } else if (job.jobType === "FACE_GROUPING") {
-                description = `Found ${clustersCreated} people in your photos`;
-              }
-
-              toast({
-                title: "Processing Complete",
-                description,
-                duration: 5000,
-              });
-
-              setLastProcessedJobs((prev) => new Set(prev).add(job.jobId));
-            } else if (
-              job.status === "FAILED" &&
-              !lastProcessedJobs.has(job.jobId)
-            ) {
-              // Show failure notification
-              toast({
-                title: "Processing Failed",
-                description: `${getJobTitle(job.jobType)} encountered an error`,
-                variant: "destructive",
-                duration: 8000,
-              });
-
-              setLastProcessedJobs((prev) => new Set(prev).add(job.jobId));
+            let description = "";
+            if (job.jobType === "FACE_DETECTION") {
+              description = `Detected ${facesDetected} faces in your photos`;
+            } else if (job.jobType === "FACE_GROUPING") {
+              description = `Found ${clustersCreated} people in your photos`;
             }
-          });
-        }
+
+            toast({
+              title: "Processing Complete",
+              description,
+              duration: 5000,
+            });
+
+            setLastProcessedJobs((prev) => new Set(prev).add(job.id));
+          } else if (
+            statusLower === "failed" &&
+            !lastProcessedJobs.has(job.id)
+          ) {
+            // Show failure notification
+            toast({
+              title: "Processing Failed",
+              description: `${getJobTitle(job.jobType || '')} encountered an error`,
+              variant: "destructive",
+              duration: 8000,
+            });
+
+            setLastProcessedJobs((prev) => new Set(prev).add(job.id));
+          }
+        });
       } catch (error) {
         console.error("Failed to check job updates:", error);
       }

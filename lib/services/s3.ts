@@ -79,6 +79,34 @@ export async function uploadMedia(
 }
 
 /**
+ * Upload buffer to S3 (generic upload for any file type)
+ */
+export async function uploadBuffer(
+  buffer: Buffer,
+  key: string,
+  contentType: string
+): Promise<void> {
+  const s3Client = getClient();
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: config.AWS_S3_BUCKET_NAME,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+
+    await s3Client.send(command);
+    console.log(`Uploaded buffer to S3: ${key}`);
+  } catch (error) {
+    console.error("S3 upload failed:", error);
+    throw new Error(
+      `Failed to upload to S3: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+/**
  * Delete a single media file from S3
  */
 export async function deleteMedia(key: string): Promise<void> {

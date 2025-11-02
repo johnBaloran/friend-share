@@ -1,0 +1,380 @@
+import { Request, Response } from 'express';
+import { CreateGroupUseCase } from '../../core/use-cases/CreateGroupUseCase.js';
+import { JoinGroupUseCase } from '../../core/use-cases/JoinGroupUseCase.js';
+import { IGroupRepository } from '../../core/interfaces/repositories/IGroupRepository.js';
+import { IMediaRepository } from '../../core/interfaces/repositories/IMediaRepository.js';
+import { IUserRepository } from '../../core/interfaces/repositories/IUserRepository.js';
+import { IQueueService } from '../../core/interfaces/services/IQueueService.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../../shared/errors/AppError.js';
+import { MemberRole, JobType } from '../../shared/constants/index.js';
+import { Group } from '../../core/entities/Group.js';
+
+export class GroupController {
+  constructor(
+    private createGroupUseCase: CreateGroupUseCase,
+    private joinGroupUseCase: JoinGroupUseCase,
+    private groupRepository: IGroupRepository,
+    private mediaRepository: IMediaRepository,
+    private userRepository: IUserRepository,
+    private queueService: IQueueService
+  ) {}
+
+  create = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId; // From Clerk middleware
+
+    const group = await this.createGroupUseCase.execute({
+      name: req.body.name,
+      description: req.body.description,
+      storageLimit: req.body.storageLimit,
+      autoDeleteDays: req.body.autoDeleteDays,
+      creatorId: userId,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: group,
+    });
+  });
+
+  join = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+
+    const group = await this.joinGroupUseCase.execute({
+      inviteCode: req.body.inviteCode,
+      userId,
+    });
+
+    res.json({
+      success: true,
+      data: group,
+      message: 'Successfully joined group',
+    });
+  });
+
+  list = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const result = await this.groupRepository.findByUserId(userId, {
+      page,
+      limit,
+    });
+
+    const groupsWithUsers = await Promise.all(
+      result.data.map(group => this.populateGroupMembers(group))
+    );
+
+    res.json({
+      success: true,
+      data: groupsWithUsers,
+      pagination: result.pagination,
+    });
+  });
+
+  getById = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        error: 'Group not found or you do not have access',
+      });
+    }
+
+    const groupWithUsers = await this.populateGroupMembers(group);
+
+    return res.json({
+      success: true,
+      data: groupWithUsers,
+    });
+  });
+
+  /**
+   * Get storage analytics for a group
+   * GET /api/groups/:id/storage
+   */
+  getStorage = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+
+    // Verify user is admin of the group
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    if (!group) {
+      throw new NotFoundError('Group not found or you do not have access');
+    }
+
+    if (!group.isAdmin(userId)) {
+      throw new ForbiddenError('Admin access required');
+    }
+
+    // Get media count
+    const mediaCount = await this.mediaRepository.countByGroupId(groupId);
+
+    const analytics = {
+      storageUsed: group.storageUsed,
+      storageLimit: group.storageLimit,
+      storagePercentage: (group.storageUsed / group.storageLimit) * 100,
+      mediaCount,
+      storageRemaining: group.storageLimit - group.storageUsed,
+    };
+
+    return res.json({
+      success: true,
+      data: analytics,
+    });
+  });
+
+  /**
+   * Get group members
+   * GET /api/groups/:id/members
+   */
+  getMembers = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+
+    // Verify user is a member of the group
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    if (!group) {
+      throw new NotFoundError('Group not found or you do not have access');
+    }
+
+    return res.json({
+      success: true,
+      data: group.members,
+    });
+  });
+
+  /**
+   * Update member role or permissions
+   * PATCH /api/groups/:groupId/members/:memberId
+   */
+  updateMember = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const { groupId, memberId } = req.params;
+    const { role, permissions } = req.body;
+
+    // Verify user is admin of the group
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    if (!group) {
+      throw new NotFoundError('Group not found or you do not have access');
+    }
+
+    if (!group.isAdmin(userId)) {
+      throw new ForbiddenError('Admin access required');
+    }
+
+    // Cannot update yourself
+    if (userId === memberId) {
+      throw new BadRequestError('Cannot update your own role or permissions');
+    }
+
+    // Validate member exists
+    const member = group.getMember(memberId);
+    if (!member) {
+      throw new NotFoundError('Member not found in this group');
+    }
+
+    // Validate role if provided
+    if (role && !Object.values(MemberRole).includes(role)) {
+      throw new BadRequestError('Invalid role');
+    }
+
+    // Update the group using updateMember method
+    const updatedGroup = group.updateMember(memberId, { role, permissions });
+
+    // Save to repository
+    const saved = await this.groupRepository.update(groupId, updatedGroup);
+
+    return res.json({
+      success: true,
+      data: saved,
+      message: 'Member updated successfully',
+    });
+  });
+
+  /**
+   * Remove member from group
+   * DELETE /api/groups/:groupId/members/:memberId
+   */
+  removeMember = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const { groupId, memberId } = req.params;
+
+    // Verify user is admin of the group
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    if (!group) {
+      throw new NotFoundError('Group not found or you do not have access');
+    }
+
+    if (!group.isAdmin(userId)) {
+      throw new ForbiddenError('Admin access required');
+    }
+
+    // Cannot remove yourself
+    if (userId === memberId) {
+      throw new BadRequestError('Cannot remove yourself from the group');
+    }
+
+    // Validate member exists
+    const member = group.getMember(memberId);
+    if (!member) {
+      throw new NotFoundError('Member not found in this group');
+    }
+
+    // Remove member using repository
+    await this.groupRepository.removeMember(groupId, memberId);
+
+    return res.json({
+      success: true,
+      message: 'Member removed successfully',
+    });
+  });
+
+  /**
+   * Trigger face reclustering for a group
+   * POST /api/groups/:id/recluster
+   */
+  recluster = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+
+    // Verify user is admin of the group
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    if (!group) {
+      throw new NotFoundError('Group not found or you do not have access');
+    }
+
+    if (!group.isAdmin(userId)) {
+      throw new ForbiddenError('Admin access required');
+    }
+
+    // Add face grouping job to queue
+    const jobId = await this.queueService.addJob(
+      'face-processing',
+      JobType.FACE_GROUPING,
+      {
+        groupId,
+        rekognitionCollectionId: group.rekognitionCollectionId,
+      }
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        jobId,
+        message: 'Face reclustering job started',
+      },
+    });
+  });
+
+  /**
+   * Cleanup media in a group
+   * POST /api/groups/:id/cleanup
+   */
+  cleanup = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+    const { deleteOlderThan, deleteLargerThan, deleteUnprocessed } = req.body;
+
+    // Verify user is admin of the group
+    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    if (!group) {
+      throw new NotFoundError('Group not found or you do not have access');
+    }
+
+    if (!group.isAdmin(userId)) {
+      throw new ForbiddenError('Admin access required');
+    }
+
+    let deletedCount = 0;
+    let freedSpace = 0;
+
+    // Delete old media
+    if (deleteOlderThan) {
+      const cutoffDate = new Date(deleteOlderThan);
+      const oldMedia = await this.mediaRepository.findByGroupIdAndDate(groupId, null, cutoffDate);
+
+      for (const media of oldMedia) {
+        freedSpace += media.fileSize;
+        await this.mediaRepository.delete(media.id);
+        deletedCount++;
+      }
+    }
+
+    // Delete large files
+    if (deleteLargerThan) {
+      const largeMedia = await this.mediaRepository.findByGroupIdAndSize(groupId, deleteLargerThan);
+
+      for (const media of largeMedia) {
+        freedSpace += media.fileSize;
+        await this.mediaRepository.delete(media.id);
+        deletedCount++;
+      }
+    }
+
+    // Delete unprocessed media
+    if (deleteUnprocessed) {
+      const unprocessedMedia = await this.mediaRepository.findUnprocessedByGroupId(groupId);
+
+      for (const media of unprocessedMedia) {
+        freedSpace += media.fileSize;
+        await this.mediaRepository.delete(media.id);
+        deletedCount++;
+      }
+    }
+
+    // Update group storage
+    if (deletedCount > 0) {
+      group.updateStorage(-freedSpace);
+      await this.groupRepository.update(groupId, group);
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        deletedCount,
+        freedSpace,
+      },
+      message: `Cleaned up ${deletedCount} files, freed ${Math.round(freedSpace / 1024 / 1024)} MB`,
+    });
+  });
+
+  /**
+   * Helper method to populate user information for group members
+   */
+  private async populateGroupMembers(group: Group): Promise<any> {
+    const memberUserIds = group.members.map(m => m.userId);
+    const users = await Promise.all(
+      memberUserIds.map(userId => this.userRepository.findByClerkId(userId))
+    );
+
+    const membersWithUserInfo = group.members.map((member, index) => ({
+      userId: users[index]
+        ? {
+            id: users[index]!.clerkId,
+            name: users[index]!.name,
+            email: users[index]!.email,
+            avatar: users[index]!.avatar,
+          }
+        : {
+            id: member.userId,
+            name: null,
+            email: null,
+            avatar: null,
+          },
+      role: member.role,
+      permissions: member.permissions,
+      joinedAt: member.joinedAt,
+    }));
+
+    return {
+      ...group,
+      members: membersWithUserInfo,
+    };
+  }
+}

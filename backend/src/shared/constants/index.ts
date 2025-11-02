@@ -1,0 +1,44 @@
+export const MemberRole = {
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  VIEWER: 'VIEWER',
+} as const;
+
+export const JobType = {
+  FACE_DETECTION: 'FACE_DETECTION',
+  FACE_GROUPING: 'FACE_GROUPING',
+  MEDIA_CLEANUP: 'MEDIA_CLEANUP',
+} as const;
+
+export const JobStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export const ActivityType = {
+  GROUP_CREATED: 'GROUP_CREATED',
+  MEMBER_JOINED: 'MEMBER_JOINED',
+  MEMBER_LEFT: 'MEMBER_LEFT',
+  MEDIA_UPLOADED: 'MEDIA_UPLOADED',
+  MEDIA_DELETED: 'MEDIA_DELETED',
+  CLUSTER_NAMED: 'CLUSTER_NAMED',
+} as const;
+
+export const DEFAULTS = {
+  STORAGE_LIMIT: 1073741824, // 1GB
+  AUTO_DELETE_DAYS: 30,
+  FACE_SIMILARITY_THRESHOLD: 85,
+  FACE_QUALITY_THRESHOLD: 50,
+  ENHANCED_FACE_SIZE: 600,
+  MAX_FILE_SIZE: 10485760, // 10MB
+  MAX_FILES_PER_UPLOAD: 50,
+} as const;
+
+export const QUEUE_NAMES = {
+  FACE_DETECTION: 'face-detection',
+  FACE_GROUPING: 'face-grouping',
+  CLEANUP: 'cleanup',
+} as const;

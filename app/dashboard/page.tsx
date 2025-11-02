@@ -13,56 +13,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, Plus } from "lucide-react";
-
-// API response types (what we actually receive from the API)
-interface ApiGroupMember {
-  userId: {
-    _id: string;
-    name?: string;
-    email: string;
-    avatar?: string;
-  };
-  role: "ADMIN" | "MEMBER" | "VIEWER";
-  permissions: {
-    canUpload: boolean;
-    canDownload: boolean;
-    canDelete: boolean;
-  };
-  joinedAt: string;
-}
-
-interface ApiGroup {
-  _id: string;
-  name: string;
-  description?: string;
-  members: ApiGroupMember[];
-  createdAt: string;
-  updatedAt: string;
-  storageUsed: number;
-  storageLimit: number;
-  inviteCode: string;
-  creatorId: string;
-  autoDeleteDays: number;
-}
+import { groupsApi, Group } from "@/lib/api/groups";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useUser();
-  const [groups, setGroups] = useState<ApiGroup[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const loadGroups = async (): Promise<void> => {
     try {
-      const response = await fetch("/api/groups");
-      const result = await response.json();
-
-      if (result.success) {
-        setGroups(result.data);
-      }
+      const response = await groupsApi.list();
+      setGroups(response.data);
     } catch (error) {
       console.error("Failed to load groups:", error);
     } finally {
@@ -131,9 +97,9 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {groups.map((group) => (
               <Card
-                key={group._id}
+                key={group.id}
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleGroupClick(group._id)}
+                onClick={() => handleGroupClick(group.id)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -184,6 +150,7 @@ export default function DashboardPage() {
 
         <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
           <DialogContent className="sm:max-w-md">
+            <DialogTitle>Create New Group</DialogTitle>
             <CreateGroupForm
               onSuccess={handleGroupCreated}
               onCancel={() => setShowCreateForm(false)}

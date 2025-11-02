@@ -1,0 +1,38 @@
+import { Router } from 'express';
+import { createGroupRoutes } from './groupRoutes.js';
+import { createMediaRoutes, createGroupMediaRoutes } from './mediaRoutes.js';
+import { createClusterRoutes, createGroupClusterRoutes } from './clusterRoutes.js';
+import { createJobRoutes, createGroupJobRoutes } from './jobRoutes.js';
+import { webhookRoutes } from './webhooks.js';
+import { container } from '../../di/container.js';
+import { GroupController } from '../controllers/GroupController.js';
+import { MediaController } from '../controllers/MediaController.js';
+import { ClusterController } from '../controllers/ClusterController.js';
+import { JobController } from '../controllers/JobController.js';
+
+const router = Router();
+
+// Health check
+router.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Get controllers from container
+const groupController = container.get<GroupController>('GroupController');
+const mediaController = container.get<MediaController>('MediaController');
+const clusterController = container.get<ClusterController>('ClusterController');
+const jobController = container.get<JobController>('JobController');
+
+// Routes
+router.use('/groups', createGroupRoutes(groupController));
+router.use('/groups', createGroupMediaRoutes(mediaController));
+router.use('/groups', createGroupClusterRoutes(clusterController));
+router.use('/groups', createGroupJobRoutes(jobController));
+router.use('/media', createMediaRoutes(mediaController));
+router.use('/clusters', createClusterRoutes(clusterController));
+router.use('/jobs', createJobRoutes(jobController));
+
+// Webhook routes (no auth required - verified via Svix signature)
+router.use('/webhooks', webhookRoutes);
+
+export default router;

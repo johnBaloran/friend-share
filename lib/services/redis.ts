@@ -2,7 +2,7 @@ import IORedis, { RedisOptions } from "ioredis";
 import { config } from "@/lib/config/env";
 
 const globalForRedis = globalThis as unknown as {
-  redis: IORedis | undefined;
+  redis: IORedis | null | undefined;
 };
 
 // Parse Redis URL and extract components
@@ -35,7 +35,8 @@ function parseRedisUrl(url: string): RedisOptions {
 }
 
 export const redis =
-  globalForRedis.redis ?? new IORedis(parseRedisUrl(config.REDIS_URL));
+  globalForRedis.redis ??
+  (config.REDIS_URL ? new IORedis(parseRedisUrl(config.REDIS_URL)) : null);
 
 if (config.NODE_ENV !== "production") {
   globalForRedis.redis = redis;
