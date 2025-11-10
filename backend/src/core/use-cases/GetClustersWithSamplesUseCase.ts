@@ -23,7 +23,7 @@ export class GetClustersWithSamplesUseCase {
     private readonly clusterRepository: IFaceClusterRepository,
     private readonly clusterMemberRepository: IFaceClusterMemberRepository,
     private readonly faceDetectionRepository: IFaceDetectionRepository,
-    private readonly mediaRepository: IMediaRepository,
+    private readonly _mediaRepository: IMediaRepository, // Reserved for future use
     private readonly groupRepository: IGroupRepository,
     private readonly storageService: IStorageService
   ) {}

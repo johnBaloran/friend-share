@@ -89,7 +89,6 @@ export class MergeClustersUseCase {
     }
 
     // Calculate new statistics for merged cluster
-    const allMembers = [...sourceMembers, ...targetMembers];
     const totalAppearances = sourceCluster.appearanceCount + targetCluster.appearanceCount;
 
     // Calculate average confidence weighted by cluster sizes

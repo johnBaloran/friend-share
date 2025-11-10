@@ -4366,3 +4366,63 @@ Email service error: Error: Invalid login: 535 Authentication failed
   responseCode: 535,
   command: 'AUTH PLAIN'
 }
+6:37:44 PM [tsx] change in ./src\core\use-cases\GetClustersWithSamplesUseCase.ts Restarting...
+c⚠️  SENTRY_DSN not configured. Error tracking disabled.
+(node:2672) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ Redis cache connected
+Email service error: Error: Invalid login: 535 Authentication failed
+    at SMTPConnection._formatError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+    at SMTPConnection._actionAUTHComplete (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:1595:34)
+    at SMTPConnection.<anonymous> (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:556:26)
+    at SMTPConnection._processResponse (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+    at SMTPConnection._onData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+    at SMTPConnection._onSocketData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+    at TLSSocket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5) {
+  code: 'EAUTH',
+  response: '535 Authentication failed',
+  responseCode: 535,
+  command: 'AUTH PLAIN'
+}
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+6:38:34 PM [tsx] change in ./src\core\use-cases\MergeClustersUseCase.ts Restarting...
+c⚠️  SENTRY_DSN not configured. Error tracking disabled.
+(node:20416) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ Redis cache connected
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+Email service error: Error: Invalid login: 535 Authentication failed
+    at SMTPConnection._formatError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+    at SMTPConnection._actionAUTHComplete (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:1595:34)
+    at SMTPConnection.<anonymous> (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:556:26)
+    at SMTPConnection._processResponse (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+    at SMTPConnection._onData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+    at SMTPConnection._onSocketData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+    at TLSSocket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5) {
+  code: 'EAUTH',
+  response: '535 Authentication failed',
+  responseCode: 535,
+  command: 'AUTH PLAIN'
+}
