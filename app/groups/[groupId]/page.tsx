@@ -12,6 +12,9 @@ import Link from "next/link";
 // import { JobProgressTracker } from "@/components/media/JobProgressTracker";
 import { FaceClusterGrid } from "@/components/media/FaceClusterGrid";
 import { PersonMediaGallery } from "@/components/media/PersonMediaGallery";
+import { GroupSettingsModal } from "@/components/groups/GroupSettingsModal";
+import { ClusterMergeDialog } from "@/components/media/ClusterMergeDialog";
+import { useDownload } from "@/lib/hooks/useDownload";
 
 // import { JobNotifications } from "@/components/media/JobNotifications";
 import { ClusterStats } from "@/components/media/ClusterStats";
@@ -41,6 +44,17 @@ export default function GroupDetailPage() {
     clusterName?: string;
     appearanceCount: number;
   } | null>(null);
+
+  // Group settings modal
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Cluster merge state
+  const [clusterSelectMode, setClusterSelectMode] = useState(false);
+  const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+
+  // Download hook
+  const { downloadSelected } = useDownload({ groupId });
 
   // Add this function to load cluster-specific media
   const loadClusterMedia = useCallback(
@@ -126,6 +140,23 @@ export default function GroupDetailPage() {
       await loadClusters(); // Refresh clusters
     } catch (error) {
       console.error("Failed to delete cluster:", error);
+    }
+  };
+
+  const toggleSelectMode = (): void => {
+    setClusterSelectMode(!clusterSelectMode);
+    setSelectedClusters([]);
+  };
+
+  const handleMergeClusters = async (sourceId: string, targetId: string): Promise<void> => {
+    try {
+      await clustersApi.mergeClusters(sourceId, targetId);
+      await loadClusters(); // Refresh clusters after merge
+      setSelectedClusters([]);
+      setClusterSelectMode(false);
+    } catch (error) {
+      console.error("Failed to merge clusters:", error);
+      throw error;
     }
   };
 
@@ -227,7 +258,12 @@ export default function GroupDetailPage() {
 
             {/* Storage & Actions */}
             <div className="flex flex-col lg:items-end gap-3">
-              <Button variant="outline" size="sm" className="w-full lg:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full lg:w-auto"
+                onClick={() => setShowSettingsModal(true)}
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
               </Button>
@@ -261,6 +297,37 @@ export default function GroupDetailPage() {
 
         {/* Face Filter Bar - Full Width */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">
+          {/* Cluster Toolbar */}
+          {clusters.length > 0 && (
+            <div className="flex items-center justify-between mb-4 pb-4 border-b">
+              <div className="flex items-center gap-2">
+                {clusterSelectMode && (
+                  <span className="text-sm text-gray-600">
+                    {selectedClusters.length} selected
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {clusterSelectMode && selectedClusters.length >= 2 && (
+                  <Button
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setShowMergeDialog(true)}
+                  >
+                    Merge {selectedClusters.length} People
+                  </Button>
+                )}
+                <Button
+                  variant={clusterSelectMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleSelectMode}
+                >
+                  {clusterSelectMode ? "Cancel" : "Select to Merge"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           <FaceClusterGrid
             clusters={clusters}
             loading={clustersLoading}
@@ -268,6 +335,9 @@ export default function GroupDetailPage() {
             onClusterUpdate={handleClusterUpdate}
             onClusterDelete={handleClusterDelete}
             canEdit={true}
+            selectMode={clusterSelectMode}
+            selectedClusters={selectedClusters}
+            onSelectionChange={setSelectedClusters}
           />
         </div>
 
@@ -356,19 +426,14 @@ export default function GroupDetailPage() {
                   cluster={clusterInfo}
                   loading={clusterMediaLoading}
                   onBack={handleBackToMain}
-                  onDownload={(mediaIds) => {
-                    console.log("Download cluster media:", mediaIds);
-                    // TODO: Implement download functionality
-                  }}
+                  onDownload={downloadSelected}
                 />
               ) : (
                 <MediaGallery
                   media={media}
                   groupId={groupId}
                   loading={mediaLoading}
-                  onDownload={(mediaIds) => {
-                    console.log("Download functionality coming soon:", mediaIds);
-                  }}
+                  onRefresh={loadMedia}
                 />
               )}
             </div>
@@ -377,6 +442,28 @@ export default function GroupDetailPage() {
       </main>
 
       {/* <JobNotifications groupId={groupId} /> */}
+
+      {/* Group Settings Modal */}
+      {group && (
+        <GroupSettingsModal
+          group={group}
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          onUpdate={(updatedGroup) => {
+            setGroup(updatedGroup);
+            setShowSettingsModal(false);
+          }}
+        />
+      )}
+
+      {/* Cluster Merge Dialog */}
+      <ClusterMergeDialog
+        isOpen={showMergeDialog}
+        onClose={() => setShowMergeDialog(false)}
+        clusters={clusters}
+        selectedClusterIds={selectedClusters}
+        onConfirm={handleMergeClusters}
+      />
     </div>
   );
 }

@@ -1,19 +1,30 @@
 import { Request, Response } from 'express';
+import archiver from 'archiver';
 import { UploadMediaUseCase } from '../../core/use-cases/UploadMediaUseCase.js';
+import { DownloadMediaBulkUseCase } from '../../core/use-cases/DownloadMediaBulkUseCase.js';
 import { IMediaRepository } from '../../core/interfaces/repositories/IMediaRepository.js';
 import { IGroupRepository } from '../../core/interfaces/repositories/IGroupRepository.js';
 import { IStorageService } from '../../core/interfaces/services/IStorageService.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../../shared/errors/AppError.js';
 import { UploadedFile } from '../../shared/types/index.js';
+import { RedisCacheService, CacheKeys, CacheTTL } from '../../infrastructure/cache/RedisCacheService.js';
 
 export class MediaController {
+  private downloadMediaBulkUseCase: DownloadMediaBulkUseCase;
+
   constructor(
     private uploadMediaUseCase: UploadMediaUseCase,
     private mediaRepository: IMediaRepository,
     private groupRepository: IGroupRepository,
-    private storageService: IStorageService
-  ) {}
+    private storageService: IStorageService,
+    private cacheService: RedisCacheService
+  ) {
+    this.downloadMediaBulkUseCase = new DownloadMediaBulkUseCase(
+      mediaRepository,
+      groupRepository
+    );
+  }
 
   /**
    * Upload media files to a group
@@ -43,6 +54,10 @@ export class MediaController {
       files,
     });
 
+    // Invalidate media list cache for this group
+    await this.cacheService.deletePattern(`media:group:${groupId}:page:*`);
+    await this.cacheService.delete(CacheKeys.groupStorage(groupId));
+
     return res.status(201).json({
       success: true,
       data: result.media,
@@ -67,13 +82,63 @@ export class MediaController {
       throw new NotFoundError('Group not found or you do not have access');
     }
 
-    const result = await this.mediaRepository.findByGroupId(groupId, { page, limit });
+    // Cache media list (5 min TTL - fresher data for media updates)
+    const cacheKey = CacheKeys.mediaByGroup(groupId, page);
+    const result = await this.cacheService.wrap(
+      cacheKey,
+      async () => this.mediaRepository.findByGroupId(groupId, { page, limit }),
+      CacheTTL.SHORT
+    );
+
+    // Generate presigned URLs for each media item (don't cache URLs as they expire)
+    const mediaWithUrls = await Promise.all(
+      result.data.map(async (media) => ({
+        id: media.id,
+        groupId: media.groupId,
+        uploaderId: media.uploaderId,
+        originalName: media.originalName,
+        fileSize: media.fileSize,
+        mimeType: media.mimeType,
+        isProcessed: media.processed,
+        createdAt: media.createdAt,
+        presignedUrl: await this.storageService.getPresignedUrl(media.s3Key, 3600),
+      }))
+    );
 
     return res.json({
       success: true,
-      data: result.data,
+      data: mediaWithUrls,
       pagination: result.pagination,
     });
+  });
+
+  /**
+   * Proxy S3 images through backend (for CORS-free canvas access)
+   * GET /api/media/proxy?key=...
+   */
+  proxy = asyncHandler(async (req: Request, res: Response) => {
+    const key = req.query.key as string;
+
+    if (!key) {
+      throw new BadRequestError('Missing key parameter');
+    }
+
+    try {
+      // Get the file from S3
+      const buffer = await this.storageService.getObjectBuffer(key);
+
+      // Set appropriate headers
+      res.set({
+        'Content-Type': 'image/jpeg',
+        'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+        'Access-Control-Allow-Origin': '*', // Allow from any origin
+      });
+
+      return res.send(buffer);
+    } catch (error) {
+      console.error(`Proxy failed for key ${key}:`, error);
+      throw new NotFoundError('Image not found');
+    }
   });
 
   /**
@@ -84,7 +149,13 @@ export class MediaController {
     const userId = req.auth!.userId;
     const mediaId = req.params.id;
 
-    const media = await this.mediaRepository.findById(mediaId);
+    // Cache media metadata (30 min TTL)
+    const media = await this.cacheService.wrap(
+      CacheKeys.media(mediaId),
+      async () => this.mediaRepository.findById(mediaId),
+      CacheTTL.MEDIUM
+    );
+
     if (!media) {
       throw new NotFoundError('Media not found');
     }
@@ -95,7 +166,7 @@ export class MediaController {
       throw new ForbiddenError('You do not have access to this media');
     }
 
-    // Generate presigned URL for the media
+    // Generate presigned URL for the media (don't cache URLs as they expire)
     const presignedUrl = await this.storageService.getPresignedUrl(media.s3Key, 3600);
 
     return res.json({
@@ -139,6 +210,11 @@ export class MediaController {
     // Update group storage usage
     await this.groupRepository.updateStorageUsed(media.groupId, -media.fileSize);
 
+    // Invalidate caches
+    await this.cacheService.delete(CacheKeys.media(mediaId));
+    await this.cacheService.deletePattern(`media:group:${media.groupId}:page:*`);
+    await this.cacheService.delete(CacheKeys.groupStorage(media.groupId));
+
     return res.json({
       success: true,
       message: 'Media deleted successfully',
@@ -179,5 +255,66 @@ export class MediaController {
         expiresIn: 7200,
       },
     });
+  });
+
+  /**
+   * Bulk download media as ZIP
+   * POST /api/groups/:groupId/media/download-bulk
+   */
+  bulkDownload = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.groupId;
+    const { mediaIds } = req.body;
+
+    if (!mediaIds || !Array.isArray(mediaIds) || mediaIds.length === 0) {
+      throw new BadRequestError('mediaIds array is required');
+    }
+
+    // Get media info and verify permissions
+    const mediaItems = await this.downloadMediaBulkUseCase.execute({
+      userId,
+      groupId,
+      mediaIds,
+    });
+
+    // Set response headers for ZIP download
+    const zipFilename = `photos_${groupId}_${Date.now()}.zip`;
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
+
+    // Create ZIP archive
+    const archive = archiver('zip', {
+      zlib: { level: 6 }, // Compression level (0-9)
+    });
+
+    // Handle archive errors
+    archive.on('error', (err) => {
+      console.error('Archive error:', err);
+      throw err;
+    });
+
+    // Pipe archive to response
+    archive.pipe(res);
+
+    // Add each file to the archive
+    for (const media of mediaItems) {
+      try {
+        // Get file stream from S3
+        const fileStream = await this.storageService.getFileStream(media.s3Key);
+
+        // Add file to archive with original name
+        // Use a counter if there are duplicate filenames
+        const filename = media.originalName;
+        archive.append(fileStream, { name: filename });
+      } catch (error) {
+        console.error(`Failed to add ${media.originalName} to archive:`, error);
+        // Continue with other files
+      }
+    }
+
+    // Finalize the archive
+    await archive.finalize();
+
+    console.log(`✅ Bulk download: ${mediaItems.length} files sent to user ${userId}`);
   });
 }

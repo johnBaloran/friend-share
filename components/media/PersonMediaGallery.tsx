@@ -71,6 +71,10 @@ export function PersonMediaGallery({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  // Check if any images are being processed
+  const hasProcessingImages = media.some((item) => !item.isProcessed);
+  const processingCount = media.filter((item) => !item.isProcessed).length;
+
   if (loading) {
     return (
       <Card>
@@ -132,7 +136,23 @@ export function PersonMediaGallery({
         )}
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="relative">
+        {/* Processing Overlay - Shows over entire gallery */}
+        {hasProcessingImages && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center z-50">
+            <div className="text-center px-6 py-8 bg-white/10 rounded-xl border border-white/20">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
+              <p className="text-white text-lg font-semibold mb-2">
+                Processing {processingCount}{" "}
+                {processingCount === 1 ? "photo" : "photos"}...
+              </p>
+              <p className="text-white/90 text-sm">
+                We&apos;1ll email you once it&apos;1s done
+              </p>
+            </div>
+          </div>
+        )}
+
         {media.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <FileImage className="mx-auto h-16 w-16 mb-4 text-gray-300" />
@@ -174,14 +194,6 @@ export function PersonMediaGallery({
                         className="bg-white"
                       />
                     </div>
-
-                    {!item.isProcessed && (
-                      <div className="absolute bottom-2 left-2">
-                        <Badge variant="secondary" className="text-xs">
-                          Processing...
-                        </Badge>
-                      </div>
-                    )}
 
                     {item.faceDetections.length > 1 && (
                       <div className="absolute bottom-2 right-2">

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { CreateGroupUseCase } from '../../core/use-cases/CreateGroupUseCase.js';
 import { JoinGroupUseCase } from '../../core/use-cases/JoinGroupUseCase.js';
+import { UpdateGroupUseCase } from '../../core/use-cases/UpdateGroupUseCase.js';
+import { DeleteGroupUseCase } from '../../core/use-cases/DeleteGroupUseCase.js';
 import { IGroupRepository } from '../../core/interfaces/repositories/IGroupRepository.js';
 import { IMediaRepository } from '../../core/interfaces/repositories/IMediaRepository.js';
 import { IUserRepository } from '../../core/interfaces/repositories/IUserRepository.js';
@@ -9,15 +11,19 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../../shared/errors/AppError.js';
 import { MemberRole, JobType } from '../../shared/constants/index.js';
 import { Group } from '../../core/entities/Group.js';
+import { RedisCacheService, CacheKeys, CacheTTL } from '../../infrastructure/cache/RedisCacheService.js';
 
 export class GroupController {
   constructor(
     private createGroupUseCase: CreateGroupUseCase,
     private joinGroupUseCase: JoinGroupUseCase,
+    private updateGroupUseCase: UpdateGroupUseCase,
+    private deleteGroupUseCase: DeleteGroupUseCase,
     private groupRepository: IGroupRepository,
     private mediaRepository: IMediaRepository,
     private userRepository: IUserRepository,
-    private queueService: IQueueService
+    private queueService: IQueueService,
+    private cacheService: RedisCacheService
   ) {}
 
   create = asyncHandler(async (req: Request, res: Response) => {
@@ -30,6 +36,9 @@ export class GroupController {
       autoDeleteDays: req.body.autoDeleteDays,
       creatorId: userId,
     });
+
+    // Invalidate user's group list cache (including all paginated keys)
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser(userId)}*`);
 
     res.status(201).json({
       success: true,
@@ -45,6 +54,9 @@ export class GroupController {
       userId,
     });
 
+    // Invalidate user's group list cache (including all paginated keys)
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser(userId)}*`);
+
     res.json({
       success: true,
       data: group,
@@ -57,10 +69,13 @@ export class GroupController {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
-    const result = await this.groupRepository.findByUserId(userId, {
-      page,
-      limit,
-    });
+    // Use cache wrapper for group lists (30 min TTL)
+    const cacheKey = `${CacheKeys.groupsByUser(userId)}:page:${page}:limit:${limit}`;
+    const result = await this.cacheService.wrap(
+      cacheKey,
+      async () => this.groupRepository.findByUserId(userId, { page, limit }),
+      CacheTTL.MEDIUM
+    );
 
     const groupsWithUsers = await Promise.all(
       result.data.map(group => this.populateGroupMembers(group))
@@ -77,7 +92,12 @@ export class GroupController {
     const userId = req.auth!.userId;
     const groupId = req.params.id;
 
-    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+    // Use cache for group details (30 min TTL)
+    const group = await this.cacheService.wrap(
+      CacheKeys.group(groupId),
+      async () => this.groupRepository.findByIdAndUserId(groupId, userId),
+      CacheTTL.MEDIUM
+    );
 
     if (!group) {
       return res.status(404).json({
@@ -102,26 +122,33 @@ export class GroupController {
     const userId = req.auth!.userId;
     const groupId = req.params.id;
 
-    // Verify user is admin of the group
-    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
-    if (!group) {
-      throw new NotFoundError('Group not found or you do not have access');
-    }
+    // Use cache for storage analytics (5 min TTL for fresher data)
+    const analytics = await this.cacheService.wrap(
+      CacheKeys.groupStorage(groupId),
+      async () => {
+        // Verify user is admin of the group
+        const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+        if (!group) {
+          throw new NotFoundError('Group not found or you do not have access');
+        }
 
-    if (!group.isAdmin(userId)) {
-      throw new ForbiddenError('Admin access required');
-    }
+        if (!group.isAdmin(userId)) {
+          throw new ForbiddenError('Admin access required');
+        }
 
-    // Get media count
-    const mediaCount = await this.mediaRepository.countByGroupId(groupId);
+        // Get media count
+        const mediaCount = await this.mediaRepository.countByGroupId(groupId);
 
-    const analytics = {
-      storageUsed: group.storageUsed,
-      storageLimit: group.storageLimit,
-      storagePercentage: (group.storageUsed / group.storageLimit) * 100,
-      mediaCount,
-      storageRemaining: group.storageLimit - group.storageUsed,
-    };
+        return {
+          storageUsed: group.storageUsed,
+          storageLimit: group.storageLimit,
+          storagePercentage: (group.storageUsed / group.storageLimit) * 100,
+          mediaCount,
+          storageRemaining: group.storageLimit - group.storageUsed,
+        };
+      },
+      CacheTTL.SHORT
+    );
 
     return res.json({
       success: true,
@@ -137,15 +164,24 @@ export class GroupController {
     const userId = req.auth!.userId;
     const groupId = req.params.id;
 
-    // Verify user is a member of the group
-    const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
-    if (!group) {
-      throw new NotFoundError('Group not found or you do not have access');
-    }
+    // Use cache for group members (30 min TTL)
+    const members = await this.cacheService.wrap(
+      CacheKeys.groupMembers(groupId),
+      async () => {
+        // Verify user is a member of the group
+        const group = await this.groupRepository.findByIdAndUserId(groupId, userId);
+        if (!group) {
+          throw new NotFoundError('Group not found or you do not have access');
+        }
+
+        return group.members;
+      },
+      CacheTTL.MEDIUM
+    );
 
     return res.json({
       success: true,
-      data: group.members,
+      data: members,
     });
   });
 
@@ -190,6 +226,11 @@ export class GroupController {
     // Save to repository
     const saved = await this.groupRepository.update(groupId, updatedGroup);
 
+    // Invalidate caches
+    await this.cacheService.delete(CacheKeys.group(groupId));
+    await this.cacheService.delete(CacheKeys.groupMembers(groupId));
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser('*')}`);
+
     return res.json({
       success: true,
       data: saved,
@@ -228,6 +269,11 @@ export class GroupController {
 
     // Remove member using repository
     await this.groupRepository.removeMember(groupId, memberId);
+
+    // Invalidate caches
+    await this.cacheService.delete(CacheKeys.group(groupId));
+    await this.cacheService.delete(CacheKeys.groupMembers(groupId));
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser('*')}`);
 
     return res.json({
       success: true,
@@ -332,6 +378,11 @@ export class GroupController {
     if (deletedCount > 0) {
       group.updateStorage(-freedSpace);
       await this.groupRepository.update(groupId, group);
+
+      // Invalidate caches
+      await this.cacheService.delete(CacheKeys.group(groupId));
+      await this.cacheService.delete(CacheKeys.groupStorage(groupId));
+      await this.cacheService.deletePattern(`media:group:${groupId}:page:*`);
     }
 
     return res.json({
@@ -341,6 +392,62 @@ export class GroupController {
         freedSpace,
       },
       message: `Cleaned up ${deletedCount} files, freed ${Math.round(freedSpace / 1024 / 1024)} MB`,
+    });
+  });
+
+  /**
+   * Update group settings
+   * PUT /api/groups/:id
+   */
+  update = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+    const { name, description, storageLimit, autoDeleteDays } = req.body;
+
+    const updatedGroup = await this.updateGroupUseCase.execute({
+      groupId,
+      userId,
+      name,
+      description,
+      storageLimit,
+      autoDeleteDays,
+    });
+
+    // Invalidate caches
+    await this.cacheService.delete(CacheKeys.group(groupId));
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser('*')}`);
+
+    return res.json({
+      success: true,
+      data: updatedGroup,
+      message: 'Group updated successfully',
+    });
+  });
+
+  /**
+   * Delete group and all associated data
+   * DELETE /api/groups/:id
+   */
+  delete = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const groupId = req.params.id;
+
+    await this.deleteGroupUseCase.execute({
+      groupId,
+      userId,
+    });
+
+    // Invalidate all caches for this group and user
+    await this.cacheService.delete(CacheKeys.group(groupId));
+    await this.cacheService.delete(CacheKeys.groupMembers(groupId));
+    await this.cacheService.delete(CacheKeys.groupStorage(groupId));
+    await this.cacheService.delete(CacheKeys.clustersByGroup(groupId));
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser('*')}`);
+    await this.cacheService.deletePattern(`media:group:${groupId}:*`);
+
+    return res.json({
+      success: true,
+      message: 'Group and all associated data deleted successfully',
     });
   });
 

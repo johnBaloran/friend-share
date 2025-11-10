@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,10 @@ interface FaceClusterGridProps {
   ) => void;
   onClusterDelete: (clusterId: string) => void;
   canEdit?: boolean;
+  // Multi-select mode for merging
+  selectMode?: boolean;
+  selectedClusters?: string[];
+  onSelectionChange?: (clusterIds: string[]) => void;
 }
 
 export function FaceClusterGrid({
@@ -34,10 +39,24 @@ export function FaceClusterGrid({
   onClusterUpdate,
   onClusterDelete,
   canEdit = true,
+  selectMode = false,
+  selectedClusters = [],
+  onSelectionChange,
 }: FaceClusterGridProps) {
   const [editingCluster, setEditingCluster] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const { toast } = useToast();
+
+  const handleClusterToggle = (clusterId: string) => {
+    if (!onSelectionChange) return;
+
+    const isSelected = selectedClusters.includes(clusterId);
+    if (isSelected) {
+      onSelectionChange(selectedClusters.filter((id) => id !== clusterId));
+    } else {
+      onSelectionChange([...selectedClusters, clusterId]);
+    }
+  };
 
   const startEditing = (cluster: Cluster): void => {
     setEditingCluster(cluster.id);
@@ -86,162 +105,46 @@ export function FaceClusterGrid({
     }
   };
 
-  // Component to crop and display face from full image
+  // Component to display face thumbnail
   const FaceThumbnail = ({ cluster }: { cluster: Cluster }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [croppedImage, setCroppedImage] = useState<string>("");
-    const [loading, setLoading] = useState(true);
-    const [useProxy, setUseProxy] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
-    useEffect(() => {
-      if (!cluster.samplePhoto) {
-        setLoading(false);
-        return;
-      }
-
-      const { url, s3Key, boundingBox } = cluster.samplePhoto;
-      if (!url || !boundingBox) {
-        setLoading(false);
-        return;
-      }
-
-      // Determine which URL to use
-      let imageUrl = url;
-      if (useProxy && s3Key) {
-        imageUrl = `/api/media/proxy?key=${encodeURIComponent(s3Key)}`;
-      }
-
-      const img = new Image();
-      // For S3 presigned URLs, we need to use 'anonymous' CORS mode
-      // The S3 bucket must have CORS configured to allow this
-      img.crossOrigin = "anonymous";
-
-      img.onload = () => {
-        try {
-          const canvas = canvasRef.current;
-          if (!canvas) {
-            console.error("Canvas ref not available");
-            setLoading(false);
-            return;
-          }
-
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            console.error("Could not get 2D context");
-            setLoading(false);
-            return;
-          }
-
-          // AWS Rekognition bounding box is in ratios (0-1)
-          const imgWidth = img.naturalWidth || img.width;
-          const imgHeight = img.naturalHeight || img.height;
-
-          console.log(`Processing face for cluster ${cluster.id}:`, {
-            imageSize: { width: imgWidth, height: imgHeight },
-            boundingBox,
-            url: imageUrl.substring(0, 50) + "...",
-          });
-
-          // Convert ratio to pixels
-          const cropX = boundingBox.x * imgWidth;
-          const cropY = boundingBox.y * imgHeight;
-          const cropWidth = boundingBox.width * imgWidth;
-          const cropHeight = boundingBox.height * imgHeight;
-
-          // Add 20% padding around the face for better context
-          const padding = 0.2;
-          const paddedX = Math.max(0, cropX - cropWidth * padding);
-          const paddedY = Math.max(0, cropY - cropHeight * padding);
-          const paddedWidth = Math.min(
-            imgWidth - paddedX,
-            cropWidth * (1 + padding * 2)
-          );
-          const paddedHeight = Math.min(
-            imgHeight - paddedY,
-            cropHeight * (1 + padding * 2)
-          );
-
-          console.log(`Cropping details:`, {
-            crop: { x: cropX, y: cropY, width: cropWidth, height: cropHeight },
-            padded: {
-              x: paddedX,
-              y: paddedY,
-              width: paddedWidth,
-              height: paddedHeight,
-            },
-          });
-
-          // Set canvas size to 100x100 for consistent thumbnails
-          canvas.width = 100;
-          canvas.height = 100;
-
-          // Draw cropped and resized image
-          ctx.drawImage(
-            img,
-            paddedX,
-            paddedY,
-            paddedWidth,
-            paddedHeight,
-            0,
-            0,
-            100,
-            100
-          );
-
-          // Convert to data URL
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-          console.log(
-            `Successfully cropped face for ${cluster.id}, data URL length:`,
-            dataUrl.length
-          );
-          setCroppedImage(dataUrl);
-          setLoading(false);
-        } catch (error) {
-          console.error("Error during face cropping:", error);
-          setLoading(false);
-        }
-      };
-
-      img.onerror = (error) => {
-        console.error("Failed to load image:", {
-          url: imageUrl,
-          useProxy,
-          error,
-          clusterId: cluster.id,
-        });
-
-        // If direct S3 URL failed and we haven't tried proxy yet, try proxy
-        if (!useProxy && s3Key) {
-          console.log("Retrying with proxy...");
-          setUseProxy(true);
-        } else {
-          setLoading(false);
-        }
-      };
-
-      // Load the image
-      img.src = imageUrl;
-    }, [cluster.samplePhoto, useProxy]);
+    if (!cluster.samplePhoto?.thumbnailUrl) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+          <Users className="h-8 w-8 text-gray-400" />
+        </div>
+      );
+    }
 
     return (
-      <>
-        <canvas ref={canvasRef} style={{ display: "none" }} />
-        {loading ? (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+      <div className="relative w-full h-full overflow-hidden bg-gray-100">
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
           </div>
-        ) : croppedImage ? (
-          <img
-            src={croppedImage}
-            alt={cluster.clusterName || "Person"}
-            className="object-cover w-full h-full hover:scale-110 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        )}
+        {imageError && (
+          <div className="absolute inset-0 flex items-center justify-center">
             <Users className="h-8 w-8 text-gray-400" />
           </div>
         )}
-      </>
+        <img
+          src={cluster.samplePhoto.thumbnailUrl}
+          alt={cluster.clusterName || "Person"}
+          className={`w-full h-full object-cover transition-all duration-300 hover:scale-110 ${
+            imageLoaded && !imageError ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setImageLoaded(true)}
+          onError={() => {
+            console.error("Failed to load cluster thumbnail:", {
+              clusterId: cluster.id,
+            });
+            setImageError(true);
+          }}
+        />
+      </div>
     );
   };
 
@@ -328,13 +231,36 @@ export function FaceClusterGrid({
                     </div>
                   ) : (
                     /* Display Mode */
-                    <div className="bg-white rounded-xl border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all duration-200 overflow-hidden">
+                    <div className={`bg-white rounded-xl border-2 transition-all duration-200 overflow-hidden ${
+                      selectMode && selectedClusters.includes(cluster.id)
+                        ? "border-purple-500 shadow-lg ring-2 ring-purple-200"
+                        : "border-gray-200 hover:border-purple-400 hover:shadow-lg"
+                    }`}>
                       {/* Face Image */}
                       <div
                         className="relative aspect-square cursor-pointer overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200"
-                        onClick={() => onClusterSelect(cluster.id)}
+                        onClick={() => {
+                          if (selectMode) {
+                            handleClusterToggle(cluster.id);
+                          } else {
+                            onClusterSelect(cluster.id);
+                          }
+                        }}
                       >
                         <FaceThumbnail cluster={cluster} />
+
+                        {/* Selection Checkbox (in select mode) */}
+                        {selectMode && (
+                          <div className="absolute top-2 left-2 z-10">
+                            <div className="bg-white rounded-md p-1 shadow-md">
+                              <Checkbox
+                                checked={selectedClusters.includes(cluster.id)}
+                                onCheckedChange={() => handleClusterToggle(cluster.id)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+                        )}
 
                         {/* Appearance Badge */}
                         <div className="absolute top-1.5 right-1.5">
@@ -343,18 +269,20 @@ export function FaceClusterGrid({
                           </div>
                         </div>
 
-                        {/* Confidence Badge (on hover) */}
-                        <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div
-                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                              cluster.confidence > 0.7
-                                ? "bg-green-500 text-white"
-                                : "bg-yellow-500 text-white"
-                            }`}
-                          >
-                            {Math.round(cluster.confidence * 100)}%
+                        {/* Confidence Badge (on hover, not in select mode) */}
+                        {!selectMode && (
+                          <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                cluster.confidence > 0.7
+                                  ? "bg-green-500 text-white"
+                                  : "bg-yellow-500 text-white"
+                              }`}
+                            >
+                              {Math.round(cluster.confidence * 100)}%
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
 
                       {/* Info Section */}
@@ -370,8 +298,8 @@ export function FaceClusterGrid({
                           {cluster.totalPhotos === 1 ? "photo" : "photos"}
                         </p>
 
-                        {/* Action Buttons */}
-                        {canEdit && (
+                        {/* Action Buttons (not in select mode) */}
+                        {canEdit && !selectMode && (
                           <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
@@ -386,14 +314,12 @@ export function FaceClusterGrid({
                             </Button>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0 hover:bg-red-100"
-                                  onClick={(e) => e.stopPropagation()}
+                                <button
+                                  className="h-6 w-6 p-0 hover:bg-red-100 rounded flex items-center justify-center bg-transparent border-0 cursor-pointer"
+                                  onClickCapture={(e) => e.stopPropagation()}
                                 >
                                   <Trash2 className="h-3 w-3 text-red-500" />
-                                </Button>
+                                </button>
                               </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader>
@@ -425,6 +351,15 @@ export function FaceClusterGrid({
                                 </div>
                               </DialogContent>
                             </Dialog>
+                          </div>
+                        )}
+
+                        {/* Selection indicator (in select mode) */}
+                        {selectMode && selectedClusters.includes(cluster.id) && (
+                          <div className="mt-2">
+                            <div className="bg-purple-100 text-purple-700 text-[10px] font-semibold px-2 py-1 rounded text-center">
+                              Selected
+                            </div>
                           </div>
                         )}
                       </div>

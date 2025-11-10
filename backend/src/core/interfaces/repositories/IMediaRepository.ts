@@ -6,6 +6,7 @@ export interface IMediaRepository {
   createMany(media: Media[]): Promise<Media[]>;
   findById(id: string): Promise<Media | null>;
   findByGroupId(groupId: string, pagination?: PaginationParams): Promise<PaginatedResponse<Media>>;
+  findByUploader(groupId: string, uploaderId: string): Promise<Media[]>;
   findUnprocessed(limit?: number): Promise<Media[]>;
   findByIds(ids: string[]): Promise<Media[]>;
   update(id: string, media: Partial<Media>): Promise<Media | null>;

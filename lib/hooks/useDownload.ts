@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { mediaApi } from "@/lib/api/media";
 
 interface UseDownloadOptions {
   groupId: string;
@@ -18,60 +19,24 @@ export function useDownload({
   const [downloading, setDownloading] = useState(false);
   const { toast } = useToast();
 
-  const triggerDownload = async (
-    downloadType: "selected" | "cluster" | "all",
-    options: { mediaIds?: string[]; clusterId?: string } = {}
-  ): Promise<void> => {
-    if (downloading) return;
+  const downloadSelected = async (mediaIds: string[]): Promise<void> => {
+    if (downloading || mediaIds.length === 0) return;
 
     setDownloading(true);
 
     try {
-      const response = await fetch(`/api/groups/${groupId}/download`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          downloadType,
-          ...options,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Download failed");
-      }
-
-      // Get filename from response headers
-      const contentDisposition = response.headers.get("content-disposition");
-      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-      const filename = filenameMatch?.[1] || "photos.zip";
-
-      // Create blob and download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await mediaApi.bulkDownload(groupId, mediaIds);
 
       toast({
-        title: "Download Complete",
-        description: `Successfully downloaded ${filename}`,
+        title: "Download Started",
+        description: `Downloading ${mediaIds.length} ${mediaIds.length === 1 ? "photo" : "photos"}`,
       });
     } catch (error) {
       console.error("Download failed:", error);
       toast({
         title: "Download Failed",
         description:
-          error instanceof Error ? error.message : "Unknown error occurred",
+          error instanceof Error ? error.message : "Failed to download photos",
         variant: "destructive",
       });
     } finally {
@@ -79,16 +44,52 @@ export function useDownload({
     }
   };
 
-  const downloadSelected = async (mediaIds: string[]): Promise<void> => {
-    await triggerDownload("selected", { mediaIds });
-  };
-
   const downloadCluster = async (clusterId: string): Promise<void> => {
-    await triggerDownload("cluster", { clusterId });
+    if (downloading) return;
+
+    setDownloading(true);
+
+    try {
+      // TODO: Implement cluster download endpoint
+      toast({
+        title: "Coming Soon",
+        description: "Cluster download will be available soon",
+      });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description:
+          error instanceof Error ? error.message : "Failed to download cluster photos",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const downloadAll = async (): Promise<void> => {
-    await triggerDownload("all");
+    if (downloading) return;
+
+    setDownloading(true);
+
+    try {
+      // TODO: Implement download all endpoint
+      toast({
+        title: "Coming Soon",
+        description: "Download all will be available soon",
+      });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description:
+          error instanceof Error ? error.message : "Failed to download all photos",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return {

@@ -7,6 +7,7 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 import { IStorageService } from '../../core/interfaces/services/IStorageService.js';
 import { S3UploadResult } from '../../shared/types/index.js';
 import { env } from '../../config/env.js';
@@ -130,6 +131,27 @@ export class S3Service implements IStorageService {
       return Buffer.concat(chunks);
     } catch (error) {
       console.error(`Failed to get object buffer for ${key}:`, error);
+      throw error;
+    }
+  }
+
+  async getFileStream(key: string): Promise<Readable> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+
+      const response = await this.client.send(command);
+
+      if (!response.Body) {
+        throw new Error('No body in S3 response');
+      }
+
+      // Return the stream directly
+      return response.Body as Readable;
+    } catch (error) {
+      console.error(`Failed to get file stream for ${key}:`, error);
       throw error;
     }
   }

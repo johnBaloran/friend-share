@@ -8,14 +8,7 @@ export interface ClusterWithSample {
   confidence: number;
   createdAt: Date | string;
   samplePhoto?: {
-    s3Key: string;
-    url: string;
-    boundingBox: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
+    thumbnailUrl: string;
   };
   totalPhotos: number;
 }
@@ -110,5 +103,15 @@ export const clustersApi = {
    */
   deleteCluster: async (clusterId: string): Promise<void> => {
     await api.delete(`/clusters/${clusterId}`);
+  },
+
+  /**
+   * Merge two clusters
+   * @param sourceClusterId - Cluster to merge FROM (will be deleted)
+   * @param targetClusterId - Cluster to merge INTO (will be kept)
+   */
+  mergeClusters: async (sourceClusterId: string, targetClusterId: string): Promise<ClusterWithSample> => {
+    const response = await api.post<ClusterResponse>(`/clusters/${sourceClusterId}/merge/${targetClusterId}`);
+    return response.data;
   },
 };

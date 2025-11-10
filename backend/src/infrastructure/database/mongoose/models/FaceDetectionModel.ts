@@ -26,6 +26,7 @@ export interface IFaceDetectionDocument extends Document {
     width: number;
     height: number;
   };
+  thumbnailS3Key?: string;
   processed: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +73,9 @@ const faceDetectionSchema = new Schema<IFaceDetectionDocument>(
       s3Bucket: { type: String },
       width: { type: Number },
       height: { type: Number },
+    },
+    thumbnailS3Key: {
+      type: String,
     },
     processed: {
       type: Boolean,

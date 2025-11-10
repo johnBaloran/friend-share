@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { WebhookController } from '../controllers/WebhookController.js';
 import { container } from '../../di/container.js';
+import { webhookLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 const webhookController = container.get<WebhookController>('WebhookController');
@@ -12,6 +13,6 @@ const webhookController = container.get<WebhookController>('WebhookController');
  * Note: This endpoint does NOT use requireAuthJson middleware
  * because webhooks come from Clerk's servers, not authenticated users
  */
-router.post('/clerk', webhookController.handleClerkWebhook);
+router.post('/clerk', webhookLimiter, webhookController.handleClerkWebhook);
 
 export { router as webhookRoutes };

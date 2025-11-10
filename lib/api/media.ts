@@ -57,6 +57,18 @@ export interface DownloadUrlResponse {
   };
 }
 
+export interface BulkDownloadResponse {
+  success: boolean;
+  data: {
+    downloadUrl: string;
+    filename: string;
+    expiresIn: number;
+    totalFiles: number;
+    totalSize: number;
+  };
+  message?: string;
+}
+
 // Media API functions
 export const mediaApi = {
   /**
@@ -111,5 +123,51 @@ export const mediaApi = {
     const response = await mediaApi.getDownloadUrl(mediaId);
     // Open the download URL in a new window
     window.open(response.data.url, '_blank');
+  },
+
+  /**
+   * Bulk download multiple media files as a ZIP archive
+   * @param groupId - Group ID
+   * @param mediaIds - Array of media IDs to download
+   */
+  bulkDownload: async (groupId: string, mediaIds: string[]): Promise<void> => {
+    // Get the base URL from the API client
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const token = await (window as any).Clerk?.session?.getToken();
+
+    // Make a fetch request that can handle blob responses
+    const response = await fetch(`${baseURL}/api/groups/${groupId}/media/download-bulk`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ mediaIds }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to download media');
+    }
+
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('content-disposition');
+    const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+    const filename = filenameMatch?.[1] || `photos_${groupId}.zip`;
+
+    // Create blob from response
+    const blob = await response.blob();
+
+    // Create download link and trigger download
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   },
 };

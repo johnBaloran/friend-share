@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Users, Camera, TrendingUp, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { groupsApi } from "@/lib/api/groups";
+
+import { Users, Camera, TrendingUp } from "lucide-react";
+
 import { Cluster } from "@/lib/api/clusters";
 
 interface ClusterStatsProps {
@@ -21,37 +19,7 @@ export function ClusterStats({
   clusters,
   totalMedia,
   loading = false,
-  groupId,
-  onReclusterComplete,
 }: ClusterStatsProps) {
-  const [reclustering, setReclustering] = useState(false);
-  const { toast } = useToast();
-
-  const handleRecluster = async () => {
-    if (!groupId) return;
-
-    setReclustering(true);
-    try {
-      const result = await groupsApi.recluster(groupId);
-      toast({
-        title: "Success",
-        description: result.message || "Face reclustering job started",
-      });
-      onReclusterComplete?.();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to start reclustering",
-        variant: "destructive",
-      });
-    } finally {
-      setReclustering(false);
-    }
-  };
-
   if (loading) {
     return (
       <Card>
@@ -84,20 +52,6 @@ export function ClusterStats({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">Face Detection Stats</CardTitle>
-        {groupId && clusters.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRecluster}
-            disabled={reclustering}
-            className="h-8"
-          >
-            <RefreshCw
-              className={`h-3 w-3 mr-1 ${reclustering ? "animate-spin" : ""}`}
-            />
-            {reclustering ? "Re-clustering..." : "Re-cluster"}
-          </Button>
-        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">

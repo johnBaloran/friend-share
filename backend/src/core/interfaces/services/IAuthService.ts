@@ -32,4 +32,9 @@ export interface IAuthService {
    * Verify webhook signature from Clerk
    */
   verifyWebhookSignature(payload: string, signature: string): boolean;
+
+  /**
+   * Delete a user from Clerk (GDPR Right to Erasure)
+   */
+  deleteUser(clerkUserId: string): Promise<void>;
 }

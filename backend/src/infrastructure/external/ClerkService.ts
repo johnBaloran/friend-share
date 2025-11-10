@@ -94,4 +94,14 @@ export class ClerkService implements IAuthService {
       return false;
     }
   }
+
+  async deleteUser(clerkUserId: string): Promise<void> {
+    try {
+      await clerkClient.users.deleteUser(clerkUserId);
+      console.log(`✅ User ${clerkUserId} deleted from Clerk`);
+    } catch (error) {
+      console.error('Failed to delete user from Clerk:', error);
+      throw error;
+    }
+  }
 }

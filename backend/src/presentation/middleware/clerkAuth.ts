@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { IAuthService } from '../../core/interfaces/services/IAuthService.js';
 import { container } from '../../di/container.js';
+import { setUser } from '../../config/sentry.js';
 
 /**
  * Middleware to check if user is authenticated via Clerk
@@ -20,9 +21,17 @@ export const requireAuthJson = async (req: Request, res: Response, next: NextFun
     const authService = container.get<IAuthService>('AuthService');
     const clerkUser = await authService.getUserFromClerk(req.auth.userId);
     await authService.syncUser(clerkUser);
+
+    // Set user context in Sentry for error tracking
+    setUser(
+      req.auth.userId,
+      clerkUser.emailAddresses[0]?.emailAddress
+    );
   } catch (error) {
     console.error('Error syncing user:', error);
     // Continue even if sync fails - user is still authenticated
+    // Set user ID in Sentry even if sync fails
+    setUser(req.auth.userId);
   }
 
   return next();

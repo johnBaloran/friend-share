@@ -12,6 +12,7 @@ export class FaceDetection {
     public readonly pose?: IPose,
     public readonly qualityScore?: number,
     public readonly enhancedFace?: IEnhancedFace,
+    public readonly thumbnailS3Key?: string,
     public readonly createdAt: Date = new Date(),
     public readonly updatedAt: Date = new Date()
   ) {}
@@ -25,6 +26,7 @@ export class FaceDetection {
     pose?: IPose;
     qualityScore?: number;
     enhancedFace?: IEnhancedFace;
+    thumbnailS3Key?: string;
   }): FaceDetection {
     return new FaceDetection(
       '', // ID will be assigned by repository
@@ -36,7 +38,8 @@ export class FaceDetection {
       data.quality,
       data.pose,
       data.qualityScore,
-      data.enhancedFace
+      data.enhancedFace,
+      data.thumbnailS3Key
     );
   }
 
@@ -52,6 +55,7 @@ export class FaceDetection {
       this.pose,
       this.qualityScore,
       this.enhancedFace,
+      this.thumbnailS3Key,
       this.createdAt,
       new Date()
     );
@@ -69,6 +73,25 @@ export class FaceDetection {
       this.pose,
       this.qualityScore,
       enhancedFace,
+      this.thumbnailS3Key,
+      this.createdAt,
+      new Date()
+    );
+  }
+
+  setThumbnail(thumbnailS3Key: string): FaceDetection {
+    return new FaceDetection(
+      this.id,
+      this.mediaId,
+      this.rekognitionFaceId,
+      this.boundingBox,
+      this.confidence,
+      this.processed,
+      this.quality,
+      this.pose,
+      this.qualityScore,
+      this.enhancedFace,
+      thumbnailS3Key,
       this.createdAt,
       new Date()
     );

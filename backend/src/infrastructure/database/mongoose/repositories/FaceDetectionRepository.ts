@@ -13,6 +13,7 @@ export class MongoFaceDetectionRepository implements IFaceDetectionRepository {
       pose: faceDetection.pose,
       qualityScore: faceDetection.qualityScore,
       enhancedFace: faceDetection.enhancedFace,
+      thumbnailS3Key: faceDetection.thumbnailS3Key,
       processed: faceDetection.processed,
     });
 
@@ -30,6 +31,7 @@ export class MongoFaceDetectionRepository implements IFaceDetectionRepository {
         pose: fd.pose,
         qualityScore: fd.qualityScore,
         enhancedFace: fd.enhancedFace,
+        thumbnailS3Key: fd.thumbnailS3Key,
         processed: fd.processed,
       }))
     );
@@ -112,6 +114,7 @@ export class MongoFaceDetectionRepository implements IFaceDetectionRepository {
       doc.pose,
       doc.qualityScore,
       doc.enhancedFace,
+      doc.thumbnailS3Key,
       doc.createdAt,
       doc.updatedAt
     );

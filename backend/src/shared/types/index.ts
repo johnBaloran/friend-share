@@ -87,3 +87,24 @@ export interface UploadedFile {
   buffer: Buffer;
   size: number;
 }
+
+// Job Data Types
+export interface FaceDetectionJobData {
+  mediaIds: string[];
+  groupId: string;
+  userId: string;
+}
+
+export interface FaceGroupingJobData {
+  faceDetectionIds: string[];
+  groupId: string;
+  userId: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CleanupJobData {
+  groupId: string;
+  userId: string;
+  targetDate?: Date;
+  mediaIds?: string[];
+}

@@ -6,10 +6,17 @@ import morgan from 'morgan';
 import { clerkMiddleware } from '@clerk/express';
 
 import { env } from './config/env.js';
+import { initSentry } from './config/sentry.js';
+import { setupExpressErrorHandler } from '@sentry/node';
 import { database } from './infrastructure/database/mongoose/connection.js';
 import routes from './presentation/routes/index.js';
 import { errorHandler } from './presentation/middleware/errorHandler.js';
 import { requireAuthJson } from './presentation/middleware/clerkAuth.js';
+import { apiLimiter } from './presentation/middleware/rateLimiter.js';
+import { sanitizeBody } from './presentation/middleware/validate.js';
+
+// Initialize Sentry FIRST (before any other imports or middleware)
+initSentry();
 
 const app = express();
 
@@ -27,6 +34,9 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Sanitize request bodies (remove null/undefined/empty values)
+app.use(sanitizeBody);
+
 // Logging
 if (env.isDevelopment()) {
   app.use(morgan('dev'));
@@ -37,7 +47,7 @@ if (env.isDevelopment()) {
 // Clerk Authentication Middleware
 app.use(clerkMiddleware());
 
-// Public Health Check (no auth required)
+// Public Health Check (no auth required, no rate limit)
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
@@ -45,6 +55,9 @@ app.get('/health', (_req, res) => {
     environment: env.get('NODE_ENV'),
   });
 });
+
+// Apply rate limiting to all API routes
+app.use(env.get('API_PREFIX'), apiLimiter);
 
 // Protected API Routes
 app.use(env.get('API_PREFIX'), requireAuthJson, routes);
@@ -57,7 +70,10 @@ app.use((_req, res) => {
   });
 });
 
-// Error Handler (must be last)
+// Sentry Error Handler (must be before custom error handlers)
+setupExpressErrorHandler(app);
+
+// Custom Error Handler (must be last)
 app.use(errorHandler);
 
 // Start Server

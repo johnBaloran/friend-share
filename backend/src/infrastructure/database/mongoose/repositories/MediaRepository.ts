@@ -76,6 +76,11 @@ export class MongoMediaRepository implements IMediaRepository {
     };
   }
 
+  async findByUploader(groupId: string, uploaderId: string): Promise<Media[]> {
+    const docs = await MediaModel.find({ groupId, uploaderId }).sort({ createdAt: -1 });
+    return docs.map(doc => this.toEntity(doc));
+  }
+
   async findUnprocessed(limit: number = 100): Promise<Media[]> {
     const docs = await MediaModel.find({ processed: false })
       .sort({ createdAt: 1 })

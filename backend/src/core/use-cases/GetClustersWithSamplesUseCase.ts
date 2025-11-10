@@ -13,14 +13,7 @@ export interface ClusterWithSample {
   confidence: number;
   createdAt: Date;
   samplePhoto?: {
-    s3Key: string;
-    url: string;
-    boundingBox: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
+    thumbnailUrl: string;
   };
   totalPhotos: number;
 }
@@ -79,31 +72,25 @@ export class GetClustersWithSamplesUseCase {
         const mediaIds = [...new Set(faceDetections.map(f => f.mediaId))];
         const totalPhotos = mediaIds.length;
 
-        // Get the media item for the best face
-        if (bestFace) {
-          const media = await this.mediaRepository.findById(bestFace.mediaId);
+        // Get the thumbnail for the best face
+        if (bestFace && bestFace.thumbnailS3Key) {
+          // Generate presigned URL for the face thumbnail
+          try {
+            const thumbnailUrl = await this.storageService.getPresignedUrl(bestFace.thumbnailS3Key, 3600);
 
-          if (media) {
-            // Generate presigned URL
-            try {
-              const presignedUrl = await this.storageService.getPresignedUrl(media.s3Key, 3600);
-
-              return {
-                id: cluster.id,
-                clusterName: cluster.clusterName,
-                appearanceCount: cluster.appearanceCount,
-                confidence: cluster.confidence,
-                createdAt: cluster.createdAt,
-                samplePhoto: {
-                  s3Key: media.s3Key,
-                  url: presignedUrl,
-                  boundingBox: bestFace.boundingBox,
-                },
-                totalPhotos,
-              };
-            } catch (error) {
-              console.error(`Failed to generate presigned URL for cluster ${cluster.id}:`, error);
-            }
+            return {
+              id: cluster.id,
+              clusterName: cluster.clusterName,
+              appearanceCount: cluster.appearanceCount,
+              confidence: cluster.confidence,
+              createdAt: cluster.createdAt,
+              samplePhoto: {
+                thumbnailUrl,
+              },
+              totalPhotos,
+            };
+          } catch (error) {
+            console.error(`Failed to generate presigned URL for cluster ${cluster.id}:`, error);
           }
         }
 

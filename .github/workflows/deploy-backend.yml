@@ -1,0 +1,99 @@
+name: Deploy Backend to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  deploy:
+    name: Deploy to Elastic Beanstalk
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run tests (if available)
+        run: npm test --if-present
+        continue-on-error: true
+
+      - name: Generate deployment package
+        run: |
+          # Create deployment directory
+          mkdir -p deploy
+
+          # Copy built files
+          cp -r dist deploy/
+          cp package*.json deploy/
+
+          # Copy EB config
+          cp -r .ebextensions deploy/ 2>/dev/null || true
+          cp .ebignore deploy/ 2>/dev/null || true
+
+          # Create zip
+          cd deploy
+          zip -r ../deploy.zip . -x '*.git*'
+
+      - name: Get timestamp
+        id: timestamp
+        run: echo "time=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: face-media-backend
+          environment_name: face-media-prod
+          version_label: ${{ github.sha }}-${{ steps.timestamp.outputs.time }}
+          region: us-east-1
+          deployment_package: backend/deploy.zip
+          wait_for_deployment: true
+          wait_for_environment_recovery: 300
+
+      - name: Deployment Success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Version: ${{ github.sha }}"
+          echo "Time: ${{ steps.timestamp.outputs.time }}"
+
+      - name: Deployment Failed
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs above for details"
+          exit 1
+
+      - name: Notify Slack (Optional)
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Backend deployment to Elastic Beanstalk'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

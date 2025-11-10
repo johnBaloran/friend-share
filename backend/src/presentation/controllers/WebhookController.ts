@@ -1,9 +1,13 @@
 import { Request, Response } from 'express';
 import { IAuthService } from '../../core/interfaces/services/IAuthService.js';
+import { IEmailService } from '../../core/interfaces/services/IEmailService.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 
 export class WebhookController {
-  constructor(private authService: IAuthService) {}
+  constructor(
+    private authService: IAuthService,
+    private emailService: IEmailService
+  ) {}
 
   /**
    * Handle Clerk webhook events
@@ -93,6 +97,20 @@ export class WebhookController {
     };
 
     await this.authService.syncUser(clerkUser);
+
+    // Send welcome email
+    try {
+      const userEmail = data.email_addresses[0]?.email_address;
+      const userName = data.first_name || 'there';
+
+      if (userEmail) {
+        await this.emailService.sendWelcomeEmail(userEmail, userName);
+        console.log(`📧 Welcome email sent to ${userEmail}`);
+      }
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      // Don't throw - we don't want to fail the webhook if email fails
+    }
   }
 
   /**

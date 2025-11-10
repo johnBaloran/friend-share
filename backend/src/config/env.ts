@@ -41,6 +41,18 @@ const envSchema = z.object({
 
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+
+  // Sentry (Error Tracking)
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_ENABLED_IN_DEV: z.string().optional().transform(val => val === 'true'),
+
+  // Email / SMTP
+  EMAIL_FROM: z.string().default('noreply@facesharing.app'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional().default('587'),
+  SMTP_SECURE: z.string().optional().transform(val => val === 'true'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 });
 
 type Env = z.infer<typeof envSchema>;

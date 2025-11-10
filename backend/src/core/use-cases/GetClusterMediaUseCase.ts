@@ -98,18 +98,46 @@ export class GetClusterMediaUseCase {
           const presignedUrl = await this.storageService.getPresignedUrl(item.s3Key, 3600);
 
           return {
-            ...item,
+            id: item.id,
+            groupId: item.groupId,
+            uploaderId: item.uploaderId,
+            filename: item.filename,
+            originalName: item.originalName,
+            s3Key: item.s3Key,
+            s3Bucket: item.s3Bucket,
+            url: item.url,
+            mimeType: item.mimeType,
+            fileSize: item.fileSize,
+            isProcessed: item.processed,
+            width: item.width,
+            height: item.height,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
             presignedUrl,
             faceDetections: itemFaceDetections,
-          } as MediaWithFaceInfo;
+          } as any;
         } catch (error) {
           console.error(`Failed to generate presigned URL for ${item.s3Key}:`, error);
 
           return {
-            ...item,
+            id: item.id,
+            groupId: item.groupId,
+            uploaderId: item.uploaderId,
+            filename: item.filename,
+            originalName: item.originalName,
+            s3Key: item.s3Key,
+            s3Bucket: item.s3Bucket,
+            url: item.url,
+            mimeType: item.mimeType,
+            fileSize: item.fileSize,
+            isProcessed: item.processed,
+            width: item.width,
+            height: item.height,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
             presignedUrl: '',
             faceDetections: itemFaceDetections,
-          } as MediaWithFaceInfo;
+          } as any;
         }
       })
     );

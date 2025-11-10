@@ -3,11 +3,13 @@ import { IQueueService } from '../../core/interfaces/services/IQueueService.js';
 import { IGroupRepository } from '../../core/interfaces/repositories/IGroupRepository.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { NotFoundError } from '../../shared/errors/AppError.js';
+import { RedisCacheService, CacheKeys, CacheTTL } from '../../infrastructure/cache/RedisCacheService.js';
 
 export class JobController {
   constructor(
     private queueService: IQueueService,
-    private groupRepository: IGroupRepository
+    private groupRepository: IGroupRepository,
+    private cacheService: RedisCacheService
   ) {}
 
   /**
@@ -17,7 +19,12 @@ export class JobController {
   getJobStatus = asyncHandler(async (req: Request, res: Response) => {
     const jobId = req.params.jobId;
 
-    const jobStatus = await this.queueService.getJobById(jobId);
+    // Cache job status with short TTL (5 min) since it changes frequently
+    const jobStatus = await this.cacheService.wrap(
+      CacheKeys.jobStatus(jobId),
+      async () => this.queueService.getJobById(jobId),
+      CacheTTL.SHORT
+    );
 
     if (!jobStatus) {
       throw new NotFoundError('Job not found');
@@ -45,6 +52,9 @@ export class JobController {
       });
     }
 
+    // Invalidate job status cache
+    await this.cacheService.delete(CacheKeys.jobStatus(jobId));
+
     return res.json({
       success: true,
       message: 'Job cancelled successfully',
@@ -65,7 +75,13 @@ export class JobController {
       throw new NotFoundError('Group not found or you do not have access');
     }
 
-    const jobs = await this.queueService.getJobsByGroupId(groupId);
+    // Cache group jobs with short TTL (5 min) since they change frequently
+    const cacheKey = `jobs:group:${groupId}`;
+    const jobs = await this.cacheService.wrap(
+      cacheKey,
+      async () => this.queueService.getJobsByGroupId(groupId),
+      CacheTTL.SHORT
+    );
 
     return res.json({
       success: true,
