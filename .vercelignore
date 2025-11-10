@@ -1,18 +1,19 @@
 # Backend - Don't deploy to Vercel
+
 backend/
 
-# Worker - Don't deploy to Vercel
-worker/
-
 # Documentation
-*.md
+
+\*.md
 !README.md
 
 # Development files
+
 .env.local
 .env.development
 
 # Test files
-**/*.test.ts
-**/*.test.tsx
-**/__tests__/
+
+**/\*.test.ts
+**/\*.test.tsx
+\*\*/**tests**/
