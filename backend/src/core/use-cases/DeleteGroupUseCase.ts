@@ -5,6 +5,7 @@ import { IFaceClusterRepository } from '../interfaces/repositories/IFaceClusterR
 import { IStorageService } from '../interfaces/services/IStorageService.js';
 import { IFaceRecognitionService } from '../interfaces/services/IFaceRecognitionService.js';
 import { NotFoundError, ForbiddenError } from '../../shared/errors/AppError.js';
+import { Media } from '../entities/Media.js';
 
 /**
  * DeleteGroupUseCase
@@ -97,21 +98,31 @@ export class DeleteGroupUseCase {
 
   private async deleteS3Objects(groupId: string): Promise<void> {
     try {
-      // Get all media for the group
-      const media = await this.mediaRepository.findByGroupId(groupId);
-      console.log(`[DeleteGroup] Found ${media.length} media files to delete from S3`);
+      // Get all media for the group (fetch all pages to get complete list)
+      let allMedia: Media[] = [];
+      let page = 1;
+      let hasMore = true;
 
-      if (media.length === 0) {
+      while (hasMore) {
+        const response = await this.mediaRepository.findByGroupId(groupId, { page, limit: 100 });
+        allMedia = [...allMedia, ...response.data];
+        hasMore = page < response.pagination.totalPages;
+        page++;
+      }
+
+      console.log(`[DeleteGroup] Found ${allMedia.length} media files to delete from S3`);
+
+      if (allMedia.length === 0) {
         console.log('[DeleteGroup] No media files to delete from S3');
         return;
       }
 
       // Collect all S3 keys (media files)
-      const s3Keys = media.map(m => m.s3Key);
+      const s3Keys = allMedia.map(m => m.s3Key);
 
       // Get all face detections to collect thumbnail keys
       const allFaceDetections = await Promise.all(
-        media.map(m => this.faceDetectionRepository.findByMediaId(m.id))
+        allMedia.map(m => this.faceDetectionRepository.findByMediaId(m.id))
       );
       const thumbnailKeys = allFaceDetections
         .flat()
@@ -145,9 +156,19 @@ export class DeleteGroupUseCase {
 
       // 2. Delete face detections (references media)
       // Get all media first, then delete face detections for each media
-      const media = await this.mediaRepository.findByGroupId(groupId);
+      let allMedia: Media[] = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await this.mediaRepository.findByGroupId(groupId, { page, limit: 100 });
+        allMedia = [...allMedia, ...response.data];
+        hasMore = page < response.pagination.totalPages;
+        page++;
+      }
+
       let faceDetectionsDeleted = 0;
-      for (const m of media) {
+      for (const m of allMedia) {
         const count = await this.faceDetectionRepository.deleteByMediaId(m.id);
         faceDetectionsDeleted += count;
       }
