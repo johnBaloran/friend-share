@@ -11,7 +11,8 @@ export default function NotFound() {
           <h1 className="text-6xl font-bold text-primary">404</h1>
           <h2 className="text-2xl font-semibold">Page Not Found</h2>
           <p className="text-muted-foreground">
-            The page you're looking for doesn't exist or has been moved.
+            The page you&apos;re looking for doesn&apos;t exist or has been
+            moved.
           </p>
         </div>
 
@@ -22,7 +23,11 @@ export default function NotFound() {
               Go Home
             </Link>
           </Button>
-          <Button asChild variant="outline" onClick={() => window.history.back()}>
+          <Button
+            asChild
+            variant="outline"
+            onClick={() => window.history.back()}
+          >
             <button>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back

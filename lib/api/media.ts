@@ -1,4 +1,17 @@
-import { api } from './client';
+import { api } from "./client";
+
+/**
+ * Bulk download multiple media files as a ZIP archive
+ * @param groupId - Group ID
+ * @param mediaIds - Array of media IDs to download
+ */
+interface ClerkWindow extends Window {
+  Clerk?: {
+    session?: {
+      getToken: () => Promise<string | null>;
+    };
+  };
+}
 
 export interface Media {
   id: string;
@@ -12,7 +25,7 @@ export interface Media {
   mimeType: string;
   fileSize: number;
   isProcessed: boolean;
-  processingStatus?: 'pending' | 'processing' | 'completed' | 'failed';
+  processingStatus?: "pending" | "processing" | "completed" | "failed";
   faceCount?: number;
   metadata?: {
     width?: number;
@@ -74,13 +87,19 @@ export const mediaApi = {
   /**
    * Upload media files to a group
    */
-  upload: async (groupId: string, files: File[]): Promise<UploadMediaResponse> => {
+  upload: async (
+    groupId: string,
+    files: File[]
+  ): Promise<UploadMediaResponse> => {
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
 
-    return api.upload<UploadMediaResponse>(`/groups/${groupId}/upload`, formData);
+    return api.upload<UploadMediaResponse>(
+      `/groups/${groupId}/upload`,
+      formData
+    );
   },
 
   /**
@@ -91,7 +110,9 @@ export const mediaApi = {
     page: number = 1,
     limit: number = 20
   ): Promise<MediaListResponse> => {
-    return api.get<MediaListResponse>(`/groups/${groupId}/media?page=${page}&limit=${limit}`);
+    return api.get<MediaListResponse>(
+      `/groups/${groupId}/media?page=${page}&limit=${limit}`
+    );
   },
 
   /**
@@ -122,36 +143,36 @@ export const mediaApi = {
   download: async (mediaId: string): Promise<void> => {
     const response = await mediaApi.getDownloadUrl(mediaId);
     // Open the download URL in a new window
-    window.open(response.data.url, '_blank');
+    window.open(response.data.url, "_blank");
   },
 
-  /**
-   * Bulk download multiple media files as a ZIP archive
-   * @param groupId - Group ID
-   * @param mediaIds - Array of media IDs to download
-   */
+  // ...
+
   bulkDownload: async (groupId: string, mediaIds: string[]): Promise<void> => {
     // Get the base URL from the API client
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-    const token = await (window as any).Clerk?.session?.getToken();
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+    const token = await (window as ClerkWindow).Clerk?.session?.getToken();
 
     // Make a fetch request that can handle blob responses
-    const response = await fetch(`${baseURL}/api/groups/${groupId}/media/download-bulk`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ mediaIds }),
-    });
+    const response = await fetch(
+      `${baseURL}/api/groups/${groupId}/media/download-bulk`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ mediaIds }),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to download media');
+      throw new Error(error.message || "Failed to download media");
     }
 
     // Get filename from Content-Disposition header
-    const contentDisposition = response.headers.get('content-disposition');
+    const contentDisposition = response.headers.get("content-disposition");
     const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
     const filename = filenameMatch?.[1] || `photos_${groupId}.zip`;
 
@@ -160,7 +181,7 @@ export const mediaApi = {
 
     // Create download link and trigger download
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     document.body.appendChild(link);

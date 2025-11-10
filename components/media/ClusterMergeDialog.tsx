@@ -167,8 +167,9 @@ export function ClusterMergeDialog({
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <p className="text-xs text-amber-800">
               ⚠️ <strong>This action cannot be undone.</strong> All selected
-              people will be merged into "{targetCluster?.clusterName || "Unknown"}
-              ".
+              people will be merged into &quot;
+              {targetCluster?.clusterName || "Unknown"}
+              &quot;.
             </p>
           </div>
         </div>

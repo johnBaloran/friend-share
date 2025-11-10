@@ -29,7 +29,9 @@ export function useDownload({
 
       toast({
         title: "Download Started",
-        description: `Downloading ${mediaIds.length} ${mediaIds.length === 1 ? "photo" : "photos"}`,
+        description: `Downloading ${mediaIds.length} ${
+          mediaIds.length === 1 ? "photo" : "photos"
+        }`,
       });
     } catch (error) {
       console.error("Download failed:", error);
@@ -50,6 +52,7 @@ export function useDownload({
     setDownloading(true);
 
     try {
+      console.log(`Downloading cluster ${clusterId}`);
       // TODO: Implement cluster download endpoint
       toast({
         title: "Coming Soon",
@@ -60,7 +63,9 @@ export function useDownload({
       toast({
         title: "Download Failed",
         description:
-          error instanceof Error ? error.message : "Failed to download cluster photos",
+          error instanceof Error
+            ? error.message
+            : "Failed to download cluster photos",
         variant: "destructive",
       });
     } finally {
@@ -84,7 +89,9 @@ export function useDownload({
       toast({
         title: "Download Failed",
         description:
-          error instanceof Error ? error.message : "Failed to download all photos",
+          error instanceof Error
+            ? error.message
+            : "Failed to download all photos",
         variant: "destructive",
       });
     } finally {

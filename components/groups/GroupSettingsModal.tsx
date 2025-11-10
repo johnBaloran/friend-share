@@ -97,9 +97,9 @@ export function GroupSettingsModal({
 
       onUpdate(updatedGroup);
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update group:", error);
-      setErrors({ general: error.message || "Failed to update group settings" });
+      setErrors({ general: error instanceof Error ? error.message : "Failed to update group settings" });
     } finally {
       setIsLoading(false);
     }
@@ -110,9 +110,9 @@ export function GroupSettingsModal({
     try {
       await groupsApi.delete(group.id);
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to delete group:", error);
-      setErrors({ general: error.message || "Failed to delete group" });
+      setErrors({ general: error instanceof Error ? error.message : "Failed to delete group" });
       setShowDeleteConfirm(false);
       setIsDeleting(false);
     }

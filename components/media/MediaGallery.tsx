@@ -157,7 +157,11 @@ export function MediaGallery({
                   <Trash2 className="h-4 w-4 mr-2" />
                   {deleting ? "Deleting..." : `Delete (${selectedMedia.size})`}
                 </Button>
-                <Button onClick={handleDownload} size="sm" disabled={downloading}>
+                <Button
+                  onClick={handleDownload}
+                  size="sm"
+                  disabled={downloading}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   {downloading
                     ? "Downloading..."
@@ -176,9 +180,12 @@ export function MediaGallery({
             <div className="text-center px-6 py-8 bg-white/10 rounded-xl border border-white/20">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
               <p className="text-white text-lg font-semibold mb-2">
-                Processing {processingCount} {processingCount === 1 ? "photo" : "photos"}...
+                Processing {processingCount}{" "}
+                {processingCount === 1 ? "photo" : "photos"}...
               </p>
-              <p className="text-white/90 text-sm">We'll email you once it's done</p>
+              <p className="text-white/90 text-sm">
+                We&apos;ll email you once it&apos;s done
+              </p>
             </div>
           </div>
         )}
