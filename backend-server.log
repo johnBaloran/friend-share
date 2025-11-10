@@ -4278,3 +4278,91 @@ Use `req.auth()` as a function instead.
 [0mGET /api/groups/69122db6794683abeb534131 [36m304[0m 1512.062 ms - -[0m
 [0mGET /api/groups/69122db6794683abeb534131/media?page=1&limit=20 [32m200[0m 1552.423 ms - -[0m
 [0mGET /api/groups/69122db6794683abeb534131/clusters [32m200[0m 1791.759 ms - -[0m
+6:14:33 PM [tsx] change in ./src\core\use-cases\DeleteGroupUseCase.ts Restarting...
+c6:15:01 PM [tsx] change in ./src\core\use-cases\DeleteGroupUseCase.ts Restarting...
+c⚠️  SENTRY_DSN not configured. Error tracking disabled.
+(node:17820) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ Redis cache connected
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Function.listen (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\express\lib\application.js:635:24)
+    at start (C:\Users\john.baloran\Desktop\face-media-sharing\backend\src\index.ts:86:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1976:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v22.20.0
+6:15:39 PM [tsx] change in ./src\core\use-cases\DeleteGroupUseCase.ts Rerunning...
+c⚠️  SENTRY_DSN not configured. Error tracking disabled.
+(node:12652) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ Redis cache connected
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+Email service error: Error: Invalid login: 535 Authentication failed
+    at SMTPConnection._formatError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+    at SMTPConnection._actionAUTHComplete (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:1595:34)
+    at SMTPConnection.<anonymous> (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:556:26)
+    at SMTPConnection._processResponse (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+    at SMTPConnection._onData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+    at SMTPConnection._onSocketData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+    at TLSSocket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5) {
+  code: 'EAUTH',
+  response: '535 Authentication failed',
+  responseCode: 535,
+  command: 'AUTH PLAIN'
+}
+6:17:32 PM [tsx] change in ./src\core\use-cases\DeleteGroupUseCase.ts Restarting...
+c⚠️  SENTRY_DSN not configured. Error tracking disabled.
+(node:10796) [MONGOOSE] Warning: Duplicate schema index on {"members.userId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ Redis cache connected
+
+🚀 Server is running!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📡 Port:        3001
+🌍 Environment: development
+🔗 API:         http://localhost:3001/api
+📊 Health:      http://localhost:3001/health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+Email service error: Error: Invalid login: 535 Authentication failed
+    at SMTPConnection._formatError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+    at SMTPConnection._actionAUTHComplete (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:1595:34)
+    at SMTPConnection.<anonymous> (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:556:26)
+    at SMTPConnection._processResponse (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+    at SMTPConnection._onData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+    at SMTPConnection._onSocketData (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+    at TLSSocket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5) {
+  code: 'EAUTH',
+  response: '535 Authentication failed',
+  responseCode: 535,
+  command: 'AUTH PLAIN'
+}
