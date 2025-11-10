@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+// Frontend-safe types (no mongoose dependencies)
 
 // Base Types
 export interface BaseDocument {
@@ -18,7 +18,7 @@ export interface IUser extends BaseDocument {
 
 // Group Types
 export interface IGroupMember {
-  userId: mongoose.Types.ObjectId;
+  userId: string;
   role: "ADMIN" | "MEMBER" | "VIEWER";
   permissions: {
     canUpload: boolean;
@@ -32,7 +32,7 @@ export interface IGroup extends BaseDocument {
   name: string;
   description?: string;
   inviteCode: string;
-  creatorId: mongoose.Types.ObjectId;
+  creatorId: string;
   members: IGroupMember[];
   storageLimit: number;
   storageUsed: number;
@@ -42,8 +42,8 @@ export interface IGroup extends BaseDocument {
 
 // Media Types
 export interface IMedia extends BaseDocument {
-  groupId: mongoose.Types.ObjectId;
-  uploaderId: mongoose.Types.ObjectId;
+  groupId: string;
+  uploaderId: string;
   filename: string;
   originalName: string;
   s3Key: string;
@@ -65,7 +65,7 @@ export interface BoundingBox {
 }
 
 export interface IFaceDetection extends BaseDocument {
-  mediaId: mongoose.Types.ObjectId;
+  mediaId: string;
   rekognitionFaceId: string;
   boundingBox: BoundingBox;
   confidence: number;
@@ -73,15 +73,15 @@ export interface IFaceDetection extends BaseDocument {
 }
 
 export interface IFaceCluster extends BaseDocument {
-  groupId: mongoose.Types.ObjectId;
+  groupId: string;
   clusterName?: string;
   appearanceCount: number;
   confidence: number;
 }
 
 export interface IFaceClusterMember extends BaseDocument {
-  clusterId: mongoose.Types.ObjectId;
-  faceDetectionId: mongoose.Types.ObjectId;
+  clusterId: string;
+  faceDetectionId: string;
   confidence: number;
 }
 

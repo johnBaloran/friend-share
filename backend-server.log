@@ -4265,3 +4265,13 @@ Use `req.auth()` as a function instead.
 [0mGET /api/groups/69122db6794683abeb534131/clusters [36m304[0m 856.202 ms - -[0m
 [0mGET /api/groups/69122db6794683abeb534131/media?page=1&limit=20 [32m200[0m 928.468 ms - -[0m
 [0mGET /api/clusters/691237f5f80cb9eaa965bf42/media?page=1&limit=20 [36m304[0m 562.976 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131 [36m304[0m 888.349 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131/media?page=1&limit=20 [32m200[0m 892.072 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131/clusters [32m200[0m 1188.444 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131/clusters [36m304[0m 824.465 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131 [36m304[0m 884.704 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131/media?page=1&limit=20 [32m200[0m 1432.031 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131 [36m304[0m 940.046 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131/media?page=1&limit=20 [32m200[0m 953.730 ms - -[0m
+[0mGET /api/groups/69122db6794683abeb534131/clusters [36m304[0m 994.252 ms - -[0m
+[0mGET /api/clusters/691237f5f80cb9eaa965bf00/media?page=1&limit=20 [32m200[0m 1383.370 ms - -[0m
