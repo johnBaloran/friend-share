@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,16 @@ import { InvitePeopleDialog } from "@/components/groups/InvitePeopleDialog";
 import { FaceGroupingSkeleton } from "@/components/groups/FaceGroupingSkeleton";
 import { groupsApi, Group } from "@/lib/api/groups";
 import { mediaApi, Media } from "@/lib/api/media";
-import { clustersApi, Cluster } from "@/lib/api/clusters";
+import {
+  clustersApi,
+  Cluster,
+  MediaWithFaceInfo,
+  FaceDetection,
+} from "@/lib/api/clusters";
 import { format } from "date-fns";
 
 export default function GroupDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { user } = useUser();
   const groupId = params.groupId as string;
 
@@ -48,11 +52,12 @@ export default function GroupDetailPage() {
   const [hasMoreMedia, setHasMoreMedia] = useState(true);
   const [totalMediaCount, setTotalMediaCount] = useState(0);
   const [clusters, setClusters] = useState<Cluster[]>([]);
-  const [clustersLoading, setClustersLoading] = useState(false);
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(
     null
   );
-  const [filteredMedia, setFilteredMedia] = useState<Media[]>([]);
+  const [filteredMedia, setFilteredMedia] = useState<
+    (Media | MediaWithFaceInfo)[]
+  >([]);
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
   const [editingClusterId, setEditingClusterId] = useState<string | null>(null);
   const [editingClusterName, setEditingClusterName] = useState("");
@@ -82,50 +87,52 @@ export default function GroupDetailPage() {
     }
   }, [groupId]);
 
-  const loadMedia = useCallback(async (page: number = 1, append: boolean = false) => {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setMediaLoading(true);
-    }
-
-    try {
-      const response = await mediaApi.listByGroup(groupId, page, 20);
-      const newMedia = response.data || [];
-
-      // Update media list (replace or append)
+  const loadMedia = useCallback(
+    async (page: number = 1, append: boolean = false) => {
       if (append) {
-        setMedia(prev => [...prev, ...newMedia]);
+        setLoadingMore(true);
       } else {
-        setMedia(newMedia);
+        setMediaLoading(true);
       }
 
-      // Update pagination state
-      if (response.pagination) {
-        setTotalMediaCount(response.pagination.total);
-        setCurrentPage(response.pagination.page);
-        setHasMoreMedia(response.pagination.page < response.pagination.totalPages);
-      } else {
-        setTotalMediaCount(newMedia.length);
-        setHasMoreMedia(false);
+      try {
+        const response = await mediaApi.listByGroup(groupId, page, 20);
+        const newMedia = response.data || [];
+
+        // Update media list (replace or append)
+        if (append) {
+          setMedia((prev) => [...prev, ...newMedia]);
+        } else {
+          setMedia(newMedia);
+        }
+
+        // Update pagination state
+        if (response.pagination) {
+          setTotalMediaCount(response.pagination.total);
+          setCurrentPage(response.pagination.page);
+          setHasMoreMedia(
+            response.pagination.page < response.pagination.totalPages
+          );
+        } else {
+          setTotalMediaCount(newMedia.length);
+          setHasMoreMedia(false);
+        }
+      } catch (error) {
+        console.error("Failed to load media:", error);
+      } finally {
+        setMediaLoading(false);
+        setLoadingMore(false);
       }
-    } catch (error) {
-      console.error("Failed to load media:", error);
-    } finally {
-      setMediaLoading(false);
-      setLoadingMore(false);
-    }
-  }, [groupId]);
+    },
+    [groupId]
+  );
 
   const loadClusters = useCallback(async () => {
-    setClustersLoading(true);
     try {
       const clusters = await clustersApi.listByGroup(groupId);
       setClusters(clusters || []);
     } catch (error) {
       console.error("Failed to load clusters:", error);
-    } finally {
-      setClustersLoading(false);
     }
   }, [groupId]);
 
@@ -159,7 +166,7 @@ export default function GroupDetailPage() {
 
   useEffect(() => {
     const loadFilteredMedia = async () => {
-      if (selectedClusterId === 'ungrouped') {
+      if (selectedClusterId === "ungrouped") {
         // Show photos that aren't in any cluster
         setFilterLoading(true);
         setFilteredMedia([]);
@@ -196,12 +203,13 @@ export default function GroupDetailPage() {
                 limit
               );
 
-              clusterMedia.media?.forEach((m: any) => {
+              clusterMedia.media?.forEach((m) => {
                 mediaIdsInClusters.add(m.id);
               });
 
               if (clusterMedia.pagination) {
-                clusterHasMore = clusterPage < clusterMedia.pagination.totalPages;
+                clusterHasMore =
+                  clusterPage < clusterMedia.pagination.totalPages;
                 clusterPage++;
               } else {
                 clusterHasMore = false;
@@ -210,7 +218,9 @@ export default function GroupDetailPage() {
           }
 
           // Step 3: Filter to show only media NOT in any cluster
-          const ungroupedMedia = allGroupMedia.filter(m => !mediaIdsInClusters.has(m.id));
+          const ungroupedMedia = allGroupMedia.filter(
+            (m) => !mediaIdsInClusters.has(m.id)
+          );
           setFilteredMedia(ungroupedMedia);
         } catch (error) {
           console.error("Failed to load ungrouped media:", error);
@@ -221,7 +231,7 @@ export default function GroupDetailPage() {
       } else if (selectedClusterId) {
         // Load ALL media for the selected cluster with pagination
         try {
-          let allMedia: any[] = [];
+          let allMedia: MediaWithFaceInfo[] = [];
           let page = 1;
           let hasMore = true;
           const limit = 100;
@@ -273,17 +283,19 @@ export default function GroupDetailPage() {
 
   const handleBulkDownload = async () => {
     const mediaToDownload =
-      selectedMedia.length > 0
-        ? selectedMedia
-        : filteredMedia.map(m => m.id);
+      selectedMedia.length > 0 ? selectedMedia : filteredMedia.map((m) => m.id);
 
     if (mediaToDownload.length === 0) {
-      alert('No photos to download');
+      alert("No photos to download");
       return;
     }
 
     if (mediaToDownload.length > 100) {
-      if (!confirm(`You're about to download ${mediaToDownload.length} photos. This may take a while. Continue?`)) {
+      if (
+        !confirm(
+          `You're about to download ${mediaToDownload.length} photos. This may take a while. Continue?`
+        )
+      ) {
         return;
       }
     }
@@ -291,8 +303,8 @@ export default function GroupDetailPage() {
     try {
       await mediaApi.bulkDownload(groupId, mediaToDownload);
     } catch (error) {
-      console.error('Bulk download failed:', error);
-      alert('Failed to download photos. Please try again.');
+      console.error("Bulk download failed:", error);
+      alert("Failed to download photos. Please try again.");
     }
   };
 
@@ -361,10 +373,12 @@ export default function GroupDetailPage() {
       setShowDeleteDialog(false);
       setMediaToDelete(null);
 
-      setSelectedMedia(prev => prev.filter(id => id !== mediaToDelete.id));
-    } catch (error: any) {
+      setSelectedMedia((prev) => prev.filter((id) => id !== mediaToDelete.id));
+    } catch (error: unknown) {
       console.error("Failed to delete media:", error);
-      alert(error.response?.data?.message || "Failed to delete photo");
+      const message =
+        error instanceof Error ? error.message : "Failed to delete photo";
+      alert(message);
     } finally {
       setDeletingMedia(false);
     }
@@ -398,9 +412,11 @@ export default function GroupDetailPage() {
       if (selectedClusterId === clusterToDelete.id) {
         setSelectedClusterId(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to delete cluster:", error);
-      alert(error.response?.data?.message || "Failed to delete person");
+      const message =
+        error instanceof Error ? error.message : "Failed to delete person";
+      alert(message);
     } finally {
       setDeletingCluster(false);
     }
@@ -421,21 +437,31 @@ export default function GroupDetailPage() {
     return media.uploaderId === user.id;
   };
 
-  const handleRemoveFaceFromCluster = async (faceDetectionId: string, e: React.MouseEvent) => {
+  const handleRemoveFaceFromCluster = async (
+    faceDetectionId: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
 
-    if (!selectedClusterId || selectedClusterId === 'ungrouped') return;
+    if (!selectedClusterId || selectedClusterId === "ungrouped") return;
 
-    if (!confirm('Remove this face from the cluster? The photo will remain, but this face won\'t be grouped with this person anymore.')) {
+    if (
+      !confirm(
+        "Remove this face from the cluster? The photo will remain, but this face won't be grouped with this person anymore."
+      )
+    ) {
       return;
     }
 
     try {
-      const result = await clustersApi.removeFaceFromCluster(selectedClusterId, faceDetectionId);
+      const result = await clustersApi.removeFaceFromCluster(
+        selectedClusterId,
+        faceDetectionId
+      );
 
       if (result.clusterDeleted) {
         setSelectedClusterId(null);
-        alert('Cluster deleted as it became empty.');
+        alert("Cluster deleted as it became empty.");
       }
 
       await loadClusters();
@@ -443,9 +469,13 @@ export default function GroupDetailPage() {
       const currentCluster = selectedClusterId;
       setSelectedClusterId(null);
       setTimeout(() => setSelectedClusterId(currentCluster), 100);
-    } catch (error: any) {
-      console.error('Failed to remove face from cluster:', error);
-      alert(error.response?.data?.message || 'Failed to remove face from cluster');
+    } catch (error: unknown) {
+      console.error("Failed to remove face from cluster:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to remove face from cluster";
+      alert(message);
     }
   };
 
@@ -475,7 +505,8 @@ export default function GroupDetailPage() {
                 Group Not Found
               </h2>
               <p className="text-gray-600 mb-4">
-                This group doesn&apos;t exist or you don&apos;t have access to it.
+                This group doesn&apos;t exist or you don&apos;t have access to
+                it.
               </p>
               <Link href="/dashboard">
                 <Button>
@@ -505,7 +536,9 @@ export default function GroupDetailPage() {
                     Back
                   </Button>
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">{group.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {group.name}
+                </h1>
                 {user && group.creatorId === user.id && (
                   <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
                     Admin
@@ -569,7 +602,8 @@ export default function GroupDetailPage() {
                   {formatStorageUsed(group.storageLimit)}
                 </span>
                 <span className="text-gray-500">
-                  ({Math.round((group.storageUsed / group.storageLimit) * 100)}%)
+                  ({Math.round((group.storageUsed / group.storageLimit) * 100)}
+                  %)
                 </span>
               </div>
             )}
@@ -640,9 +674,9 @@ export default function GroupDetailPage() {
               {/* No Person / Ungrouped Photos */}
               {clusters.length > 0 && (
                 <button
-                  onClick={() => setSelectedClusterId('ungrouped')}
+                  onClick={() => setSelectedClusterId("ungrouped")}
                   className={`flex-shrink-0 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                    selectedClusterId === 'ungrouped'
+                    selectedClusterId === "ungrouped"
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
@@ -653,7 +687,11 @@ export default function GroupDetailPage() {
                   </div>
                   <span className="text-sm font-medium">No Person</span>
                   <span className="text-xs text-gray-500">
-                    {filterLoading ? '...' : selectedClusterId === 'ungrouped' ? filteredMedia.length : '...'}
+                    {filterLoading
+                      ? "..."
+                      : selectedClusterId === "ungrouped"
+                      ? filteredMedia.length
+                      : "..."}
                   </span>
                 </button>
               )}
@@ -726,13 +764,19 @@ export default function GroupDetailPage() {
         )}
 
         {/* Empty state when filter finds no photos */}
-        {!filterLoading && selectedClusterId === 'ungrouped' && filteredMedia.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <UserX className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No Ungrouped Photos</h3>
-            <p className="text-sm text-gray-500">All photos have been grouped with people.</p>
-          </div>
-        )}
+        {!filterLoading &&
+          selectedClusterId === "ungrouped" &&
+          filteredMedia.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <UserX className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                No Ungrouped Photos
+              </h3>
+              <p className="text-sm text-gray-500">
+                All photos have been grouped with people.
+              </p>
+            </div>
+          )}
 
         {/* Media Grid */}
         {!filterLoading && filteredMedia.length > 0 && (
@@ -798,29 +842,34 @@ export default function GroupDetailPage() {
                     />
 
                     {/* Face bounding boxes - only show when viewing a specific cluster */}
-                    {selectedClusterId && selectedClusterId !== 'ungrouped' && (item as any).faceDetections && (item as any).faceDetections.map((face: any) => (
-                      <div
-                        key={face.id}
-                        className="absolute border-2 border-green-400 group-hover:border-green-500"
-                        style={{
-                          left: `${face.boundingBox.x * 100}%`,
-                          top: `${face.boundingBox.y * 100}%`,
-                          width: `${face.boundingBox.width * 100}%`,
-                          height: `${face.boundingBox.height * 100}%`,
-                        }}
-                      >
-                        {/* Remove face button - only for admin */}
-                        {user && group && group.creatorId === user.id && (
-                          <button
-                            onClick={(e) => handleRemoveFaceFromCluster(face.id, e)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
-                            title="Remove this face from cluster"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                    {selectedClusterId &&
+                      selectedClusterId !== "ungrouped" &&
+                      "faceDetections" in item &&
+                      item.faceDetections?.map((face: FaceDetection) => (
+                        <div
+                          key={face.id}
+                          className="absolute border-2 border-green-400 group-hover:border-green-500"
+                          style={{
+                            left: `${face.boundingBox.x * 100}%`,
+                            top: `${face.boundingBox.y * 100}%`,
+                            width: `${face.boundingBox.width * 100}%`,
+                            height: `${face.boundingBox.height * 100}%`,
+                          }}
+                        >
+                          {/* Remove face button - only for admin */}
+                          {user && group && group.creatorId === user.id && (
+                            <button
+                              onClick={(e) =>
+                                handleRemoveFaceFromCluster(face.id, e)
+                              }
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
+                              title="Remove this face from cluster"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
 
                     {/* Selection indicator */}
                     {selectedMedia.includes(item.id) && (
@@ -838,8 +887,8 @@ export default function GroupDetailPage() {
                         try {
                           await mediaApi.bulkDownload(groupId, [item.id]);
                         } catch (error) {
-                          console.error('Download failed:', error);
-                          alert('Failed to download photo');
+                          console.error("Download failed:", error);
+                          alert("Failed to download photo");
                         }
                       }}
                       className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-600"
@@ -872,28 +921,30 @@ export default function GroupDetailPage() {
             </div>
 
             {/* Load More Button - only show when viewing all photos (not filtered) */}
-            {selectedClusterId === null && hasMoreMedia && filteredMedia.length > 0 && (
-              <div className="flex justify-center mt-8">
-                <Button
-                  onClick={loadMoreMedia}
-                  disabled={loadingMore}
-                  variant="outline"
-                  className="gap-2"
-                >
-                  {loadingMore ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900" />
-                      Loading more...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Load More Photos
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+            {selectedClusterId === null &&
+              hasMoreMedia &&
+              filteredMedia.length > 0 && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    onClick={loadMoreMedia}
+                    disabled={loadingMore}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900" />
+                        Loading more...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Load More Photos
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
           </>
         )}
       </main>
@@ -904,7 +955,10 @@ export default function GroupDetailPage() {
           <DialogTitle>Upload Photos</DialogTitle>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
+              <Label
+                htmlFor="file-upload"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Select Photos
               </Label>
               <input
@@ -942,16 +996,21 @@ export default function GroupDetailPage() {
           <DialogTitle>Group Members</DialogTitle>
           <div className="space-y-3">
             {group.members.map((member) => (
-              <div key={member.userId.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={member.userId.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div>
                   <p className="font-medium">{member.userId.name}</p>
                   <p className="text-sm text-gray-500">{member.userId.email}</p>
                 </div>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  member.userId.id === group.creatorId
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    member.userId.id === group.creatorId
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
                   {member.userId.id === group.creatorId ? "Admin" : "Viewer"}
                 </span>
               </div>
@@ -975,17 +1034,14 @@ export default function GroupDetailPage() {
                 placeholder="Enter name..."
                 maxLength={50}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleSaveClusterName();
                   }
                 }}
               />
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={handleSaveClusterName}
-                className="flex-1"
-              >
+              <Button onClick={handleSaveClusterName} className="flex-1">
                 Save
               </Button>
               <Button
@@ -1011,7 +1067,8 @@ export default function GroupDetailPage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-700">
-                  Are you sure you want to delete <strong>{mediaToDelete?.originalName}</strong>?
+                  Are you sure you want to delete{" "}
+                  <strong>{mediaToDelete?.originalName}</strong>?
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   This action cannot be undone.
@@ -1040,7 +1097,10 @@ export default function GroupDetailPage() {
       </Dialog>
 
       {/* Delete Cluster Confirmation Dialog */}
-      <Dialog open={showDeleteClusterDialog} onOpenChange={setShowDeleteClusterDialog}>
+      <Dialog
+        open={showDeleteClusterDialog}
+        onOpenChange={setShowDeleteClusterDialog}
+      >
         <DialogContent className="max-w-sm">
           <DialogTitle>Delete Person</DialogTitle>
           <div className="space-y-4">
@@ -1050,10 +1110,12 @@ export default function GroupDetailPage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-700">
-                  Are you sure you want to delete <strong>{clusterToDelete?.clusterName || "Unknown"}</strong>?
+                  Are you sure you want to delete{" "}
+                  <strong>{clusterToDelete?.clusterName || "Unknown"}</strong>?
                 </p>
                 <p className="text-xs text-red-600 font-semibold mt-2">
-                  This will delete ALL {clusterToDelete?.appearanceCount} photo(s) containing this person.
+                  This will delete ALL {clusterToDelete?.appearanceCount}{" "}
+                  photo(s) containing this person.
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   This action cannot be undone.
