@@ -7,14 +7,13 @@ import { Header } from "@/components/layout/Header";
 import { FileUploader } from "@/components/media/FileUploader";
 import { MediaGallery } from "@/components/media/MediaGallery";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Users, Share2 } from "lucide-react";
+import { ArrowLeft, Settings, Users } from "lucide-react";
 import Link from "next/link";
 // import { JobProgressTracker } from "@/components/media/JobProgressTracker";
 import { FaceClusterGrid } from "@/components/media/FaceClusterGrid";
 import { PersonMediaGallery } from "@/components/media/PersonMediaGallery";
 import { GroupSettingsModal } from "@/components/groups/GroupSettingsModal";
 import { ClusterMergeDialog } from "@/components/media/ClusterMergeDialog";
-import { ShareLinkDialog } from "@/components/share/ShareLinkDialog";
 import { useDownload } from "@/lib/hooks/useDownload";
 
 // import { JobNotifications } from "@/components/media/JobNotifications";
@@ -48,9 +47,6 @@ export default function GroupDetailPage() {
 
   // Group settings modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-
-  // Share dialog
-  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Cluster merge state
   const [clusterSelectMode, setClusterSelectMode] = useState(false);
@@ -152,7 +148,10 @@ export default function GroupDetailPage() {
     setSelectedClusters([]);
   };
 
-  const handleMergeClusters = async (sourceId: string, targetId: string): Promise<void> => {
+  const handleMergeClusters = async (
+    sourceId: string,
+    targetId: string
+  ): Promise<void> => {
     try {
       await clustersApi.mergeClusters(sourceId, targetId);
       await loadClusters(); // Refresh clusters after merge
@@ -219,7 +218,11 @@ export default function GroupDetailPage() {
         {/* Breadcrumb Navigation */}
         <div className="mb-4">
           <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -236,9 +239,13 @@ export default function GroupDetailPage() {
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{group.name}</h1>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                    {group.name}
+                  </h1>
                   {group.description && (
-                    <p className="text-gray-600 text-sm mt-0.5">{group.description}</p>
+                    <p className="text-gray-600 text-sm mt-0.5">
+                      {group.description}
+                    </p>
                   )}
                 </div>
               </div>
@@ -247,7 +254,9 @@ export default function GroupDetailPage() {
               <div className="flex flex-wrap gap-4 mt-4">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600">{group.members.length} Members</span>
+                  <span className="text-gray-600">
+                    {group.members.length} Members
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -255,7 +264,9 @@ export default function GroupDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-600">{clusters.length} People Detected</span>
+                  <span className="text-gray-600">
+                    {clusters.length} People Detected
+                  </span>
                 </div>
               </div>
             </div>
@@ -263,14 +274,6 @@ export default function GroupDetailPage() {
             {/* Storage & Actions */}
             <div className="flex flex-col lg:items-end gap-3">
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowShareDialog(true)}
-                >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -284,9 +287,12 @@ export default function GroupDetailPage() {
               {/* Storage Card */}
               <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-4 border border-gray-200 min-w-[200px]">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-600">Storage Used</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Storage Used
+                  </span>
                   <span className="text-xs font-bold text-gray-900">
-                    {Math.round((group.storageUsed / group.storageLimit) * 100)}%
+                    {Math.round((group.storageUsed / group.storageLimit) * 100)}
+                    %
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
@@ -301,7 +307,8 @@ export default function GroupDetailPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-600">
-                  {formatStorageUsed(group.storageUsed)} of {formatStorageUsed(group.storageLimit)}
+                  {formatStorageUsed(group.storageUsed)} of{" "}
+                  {formatStorageUsed(group.storageLimit)}
                 </p>
               </div>
             </div>
@@ -411,18 +418,22 @@ export default function GroupDetailPage() {
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                      {(member.userId?.name || member.userId?.email || 'U').charAt(0).toUpperCase()}
+                      {(member.userId?.name || member.userId?.email || "U")
+                        .charAt(0)
+                        .toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {member.userId?.name || member.userId?.email?.split("@")[0] || 'Unknown User'}
+                        {member.userId?.name ||
+                          member.userId?.email?.split("@")[0] ||
+                          "Unknown User"}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {member.userId?.email || 'No email'}
+                        {member.userId?.email || "No email"}
                       </p>
                     </div>
                     <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-1 rounded-full capitalize">
-                      {member.role?.toLowerCase() || 'member'}
+                      {member.role?.toLowerCase() || "member"}
                     </span>
                   </div>
                 ))}
@@ -477,17 +488,6 @@ export default function GroupDetailPage() {
         selectedClusterIds={selectedClusters}
         onConfirm={handleMergeClusters}
       />
-
-      {/* Share Link Dialog */}
-      {group && (
-        <ShareLinkDialog
-          isOpen={showShareDialog}
-          onClose={() => setShowShareDialog(false)}
-          resourceType="group"
-          resourceId={groupId}
-          resourceName={group.name}
-        />
-      )}
     </div>
   );
 }
