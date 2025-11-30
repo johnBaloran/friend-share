@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Copy, Link as LinkIcon, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 
 interface InvitePeopleDialogProps {
   isOpen: boolean;
@@ -18,7 +17,6 @@ interface InvitePeopleDialogProps {
 export function InvitePeopleDialog({
   isOpen,
   onClose,
-  groupId,
   groupName,
   inviteCode,
 }: InvitePeopleDialogProps) {
@@ -39,7 +37,8 @@ export function InvitePeopleDialog({
 
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Share this link with anyone you want to invite. They'll be able to join after signing in.
+            Share this link with anyone you want to invite. They&apos;ll be able
+            to join after signing in.
           </p>
 
           {/* Invitation Link */}
@@ -75,7 +74,9 @@ export function InvitePeopleDialog({
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <p className="text-xs text-gray-600">
-              <strong>Note:</strong> This is a permanent link that never expires. If compromised, you can regenerate it from group settings.
+              <strong>Note:</strong> This is a permanent link that never
+              expires. If compromised, you can regenerate it from group
+              settings.
             </p>
           </div>
         </div>
