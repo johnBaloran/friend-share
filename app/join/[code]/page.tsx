@@ -18,7 +18,6 @@ export default function JoinGroupPage() {
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [groupName, setGroupName] = useState<string>("");
-  const [groupId, setGroupId] = useState<string>("");
 
   useEffect(() => {
     // Once user is loaded and signed in, join the group
@@ -34,16 +33,16 @@ export default function JoinGroupPage() {
     try {
       const group = await groupsApi.join(code);
       setGroupName(group.name);
-      setGroupId(group.id);
       setJoined(true);
 
       // Redirect to group page after 2 seconds
       setTimeout(() => {
         router.push(`/groups/${group.id}`);
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to join group:", err);
-      setError(err.message || "Failed to join group. The invite code may be invalid.");
+      const message = err instanceof Error ? err.message : "Failed to join group. The invite code may be invalid.";
+      setError(message);
       setJoining(false);
     }
   };
@@ -72,7 +71,7 @@ export default function JoinGroupPage() {
               <UserPlus className="h-10 w-10 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-3">
-              You're Invited!
+              You&apos;re Invited!
             </h1>
             <p className="text-gray-600 mb-6">
               Sign in to join this photo group and start sharing memories.
@@ -88,7 +87,7 @@ export default function JoinGroupPage() {
               Sign In to Continue
             </Button>
             <p className="text-sm text-gray-500 mt-4">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <a
                 href={`/sign-up?redirect_url=/join/${code}`}
                 className="text-blue-600 hover:underline"
@@ -113,10 +112,7 @@ export default function JoinGroupPage() {
               Unable to Join Group
             </h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button
-              onClick={() => router.push("/dashboard")}
-              variant="outline"
-            >
+            <Button onClick={() => router.push("/dashboard")} variant="outline">
               Go to Dashboard
             </Button>
           </CardContent>
@@ -136,7 +132,7 @@ export default function JoinGroupPage() {
               Welcome to {groupName}!
             </h2>
             <p className="text-gray-600 mb-4">
-              You've successfully joined the group.
+              You&apos;ve successfully joined the group.
             </p>
             <p className="text-sm text-gray-500">
               Redirecting you to the group...
