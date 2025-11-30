@@ -5,6 +5,8 @@ import { DownloadMediaBulkUseCase } from '../../core/use-cases/DownloadMediaBulk
 import { IMediaRepository } from '../../core/interfaces/repositories/IMediaRepository.js';
 import { IGroupRepository } from '../../core/interfaces/repositories/IGroupRepository.js';
 import { IStorageService } from '../../core/interfaces/services/IStorageService.js';
+import { IFaceDetectionRepository } from '../../core/interfaces/repositories/IFaceDetectionRepository.js';
+import { IFaceClusterRepository, IFaceClusterMemberRepository } from '../../core/interfaces/repositories/IFaceClusterRepository.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { BadRequestError, NotFoundError, ForbiddenError } from '../../shared/errors/AppError.js';
 import { UploadedFile } from '../../shared/types/index.js';
@@ -18,6 +20,9 @@ export class MediaController {
     private mediaRepository: IMediaRepository,
     private groupRepository: IGroupRepository,
     private storageService: IStorageService,
+    private faceDetectionRepository: IFaceDetectionRepository,
+    private faceClusterRepository: IFaceClusterRepository,
+    private faceClusterMemberRepository: IFaceClusterMemberRepository,
     private cacheService: RedisCacheService
   ) {
     this.downloadMediaBulkUseCase = new DownloadMediaBulkUseCase(
@@ -181,6 +186,8 @@ export class MediaController {
   /**
    * Delete a media item
    * DELETE /api/media/:id
+   * Admin can delete any photo, others can only delete their own uploads
+   * Cascades: Media -> FaceDetections -> FaceClusterMembers -> Updates/Deletes Clusters
    */
   delete = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.auth!.userId;
@@ -191,20 +198,72 @@ export class MediaController {
       throw new NotFoundError('Media not found');
     }
 
-    // Verify user has permission to delete
+    // Verify user is a member of the group
     const group = await this.groupRepository.findByIdAndUserId(media.groupId, userId);
     if (!group) {
       throw new ForbiddenError('You do not have access to this group');
     }
 
-    if (!group.canDelete(userId)) {
-      throw new ForbiddenError('You do not have permission to delete media in this group');
+    // Permission check: Admin can delete any photo, others can only delete their own uploads
+    const isAdmin = group.isAdmin(userId);
+    const isOwner = media.uploaderId === userId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenError('You can only delete photos you uploaded');
+    }
+
+    // CASCADE DELETE: Step 1 - Find all face detections for this media
+    const faceDetections = await this.faceDetectionRepository.findByMediaId(mediaId);
+    const faceDetectionIds = faceDetections.map(fd => fd.id);
+
+    console.log(`[Delete Media] Found ${faceDetections.length} face detections for media ${mediaId}`);
+
+    // CASCADE DELETE: Step 2 - Find all affected clusters and delete cluster members
+    const affectedClusterIds = new Set<string>();
+
+    if (faceDetectionIds.length > 0) {
+      for (const faceDetectionId of faceDetectionIds) {
+        const clusterMember = await this.faceClusterMemberRepository.findByFaceDetectionId(faceDetectionId);
+        if (clusterMember) {
+          affectedClusterIds.add(clusterMember.clusterId);
+          // Delete cluster member
+          await this.faceClusterMemberRepository.delete(clusterMember.id);
+        }
+      }
+
+      console.log(`[Delete Media] Deleted cluster members from ${affectedClusterIds.size} clusters`);
+
+      // CASCADE DELETE: Step 3 - Update cluster appearance counts or delete empty clusters
+      for (const clusterId of affectedClusterIds) {
+        const cluster = await this.faceClusterRepository.findById(clusterId);
+        if (cluster) {
+          const remainingMembers = await this.faceClusterMemberRepository.findByClusterId(clusterId);
+
+          if (remainingMembers.length === 0) {
+            // Delete empty cluster
+            await this.faceClusterRepository.delete(clusterId);
+            console.log(`[Delete Media] Deleted empty cluster ${clusterId}`);
+          } else {
+            // Update appearance count
+            const updatedCluster = cluster.updateStats(remainingMembers.length, cluster.confidence);
+            await this.faceClusterRepository.update(clusterId, updatedCluster);
+            console.log(`[Delete Media] Updated cluster ${clusterId} appearance count to ${remainingMembers.length}`);
+          }
+        }
+      }
+
+      // CASCADE DELETE: Step 4 - Delete all face detections
+      for (const faceDetectionId of faceDetectionIds) {
+        await this.faceDetectionRepository.delete(faceDetectionId);
+      }
+
+      console.log(`[Delete Media] Deleted ${faceDetectionIds.length} face detections`);
     }
 
     // Delete from S3
     await this.storageService.deleteFile(media.s3Key);
 
-    // Delete from database
+    // Delete media from database
     await this.mediaRepository.delete(mediaId);
 
     // Update group storage usage
@@ -214,6 +273,14 @@ export class MediaController {
     await this.cacheService.delete(CacheKeys.media(mediaId));
     await this.cacheService.deletePattern(`media:group:${media.groupId}:page:*`);
     await this.cacheService.delete(CacheKeys.groupStorage(media.groupId));
+    await this.cacheService.delete(CacheKeys.clustersByGroup(media.groupId));
+
+    // Invalidate affected cluster caches
+    for (const clusterId of affectedClusterIds) {
+      await this.cacheService.deletePattern(`${CacheKeys.cluster(clusterId)}:media:*`);
+    }
+
+    console.log(`[Delete Media] Successfully deleted media ${mediaId} and cleaned up ${affectedClusterIds.size} clusters`);
 
     return res.json({
       success: true,

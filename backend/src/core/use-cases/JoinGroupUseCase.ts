@@ -26,7 +26,7 @@ export class JoinGroupUseCase {
     }
 
     // Verify user exists
-    const user = await this.userRepository.findById(dto.userId);
+    const user = await this.userRepository.findByClerkId(dto.userId);
     if (!user) {
       throw new NotFoundError('User not found');
     }

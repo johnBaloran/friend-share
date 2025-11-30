@@ -4426,3 +4426,352 @@ Email service error: Error: Invalid login: 535 Authentication failed
   responseCode: 535,
   command: 'AUTH PLAIN'
 }
+Redis Client Error: Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20) {
+  errno: -4077,
+  code: 'ECONNRESET',
+  syscall: 'read'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+✅ Redis cache connected
+⚠️  MongoDB disconnected
+✅ MongoDB connected successfully
+[0mGET /api/groups/69122db6794683abeb534131 [0m-[0m - ms - -[0m
+Clerk - DEPRECATION WARNING: "req.auth" is deprecated and will be removed in the next major release.
+Use `req.auth()` as a function instead.
+Redis set error for key group:69122db6794683abeb534131: ReplyError: ERR max requests limit exceeded. Limit: 500000, Usage: 500001. See https://upstash.com/docs/redis/troubleshooting/max_requests_limit for details
+    at parseError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\redis-parser\lib\parser.js:302:14) {
+  command: {
+    name: 'setex',
+    args: [
+      'group:69122db6794683abeb534131',
+      '1800',
+      '{"id":"69122db6794683abeb534131","name":"test1","inviteCode":"GTZ74G2E","creatorId":"user_33K11bYkO1yVSGovLxuecPGbXdX","members":[{"userId":"user_33K11bYkO1yVSGovLxuecPGbXdX","role":"ADMIN","permissions":{"canUpload":true,"canDownload":true,"canDelete":true},"joinedAt":"2025-11-10T18:23:50.591Z"}],"storageLimit":1073741824,"storageUsed":10080340,"autoDeleteDays":2,"description":"lorem ipsum","rekognitionCollectionId":"face-media-group-69122db6794683abeb534131","createdAt":"2025-11-10T18:23:50.601Z","updatedAt":"2025-11-10T20:35:57.699Z"}'
+    ]
+  }
+}
+Redis Client Error: Error: read ECONNRESET
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:216:20) {
+  errno: -4077,
+  code: 'ECONNRESET',
+  syscall: 'read'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+Redis Client Error: Error: getaddrinfo ENOTFOUND dear-gecko-14475.upstash.io
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'dear-gecko-14475.upstash.io'
+}
+✅ Redis cache connected
+Redis Client Error: ReplyError: ERR max requests limit exceeded. Limit: 500000, Usage: 500001. See https://upstash.com/docs/redis/troubleshooting/max_requests_limit for details
+    at parseError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\redis-parser\lib\parser.js:302:14) {
+  command: {
+    name: 'auth',
+    args: [
+      'default',
+      'ATiLAAIncDJkYWFlMjE2ZTk4ZWU0YmQzOTM3YjI3MWUxMjUyYWViY3AyMTQ0NzU'
+    ]
+  }
+}
+✅ Redis cache connected
+Redis Client Error: ReplyError: ERR max requests limit exceeded. Limit: 500000, Usage: 500001. See https://upstash.com/docs/redis/troubleshooting/max_requests_limit for details
+    at parseError (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (C:\Users\john.baloran\Desktop\face-media-sharing\backend\node_modules\redis-parser\lib\parser.js:302:14) {
+  command: {
+    name: 'auth',
+    args: [
+      'default',
+      'ATiLAAIncDJkYWFlMjE2ZTk4ZWU0YmQzOTM3YjI3MWUxMjUyYWViY3AyMTQ0NzU'
+    ]
+  }
+}
+✅ Redis cache connected

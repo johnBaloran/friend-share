@@ -7,6 +7,7 @@ import {
   MongoFaceClusterRepository,
   MongoFaceClusterMemberRepository,
 } from '../infrastructure/database/mongoose/repositories/FaceClusterRepository.js';
+import { MongoShareableLinkRepository } from '../infrastructure/database/mongoose/repositories/ShareableLinkRepository.js';
 
 // Services
 import { S3Service } from '../infrastructure/aws/S3Service.js';
@@ -28,6 +29,10 @@ import { UploadMediaUseCase } from '../core/use-cases/UploadMediaUseCase.js';
 import { GetClustersWithSamplesUseCase } from '../core/use-cases/GetClustersWithSamplesUseCase.js';
 import { GetClusterMediaUseCase } from '../core/use-cases/GetClusterMediaUseCase.js';
 import { MergeClustersUseCase } from '../core/use-cases/MergeClustersUseCase.js';
+import { CreateShareableLinkUseCase } from '../core/use-cases/CreateShareableLinkUseCase.js';
+import { GetSharedResourceUseCase } from '../core/use-cases/GetSharedResourceUseCase.js';
+import { RevokeShareableLinkUseCase } from '../core/use-cases/RevokeShareableLinkUseCase.js';
+import { ListShareableLinksUseCase } from '../core/use-cases/ListShareableLinksUseCase.js';
 
 // Controllers
 import { GroupController } from '../presentation/controllers/GroupController.js';
@@ -36,6 +41,7 @@ import { ClusterController } from '../presentation/controllers/ClusterController
 import { JobController } from '../presentation/controllers/JobController.js';
 import { WebhookController } from '../presentation/controllers/WebhookController.js';
 import { GdprController } from '../presentation/controllers/GdprController.js';
+import { ShareController } from '../presentation/controllers/ShareController.js';
 
 class Container {
   private services = new Map<string, any>();
@@ -67,6 +73,7 @@ const mediaRepository = new MongoMediaRepository();
 const faceDetectionRepository = new MongoFaceDetectionRepository();
 const faceClusterRepository = new MongoFaceClusterRepository();
 const faceClusterMemberRepository = new MongoFaceClusterMemberRepository();
+const shareableLinkRepository = new MongoShareableLinkRepository();
 
 container.register('UserRepository', userRepository);
 container.register('GroupRepository', groupRepository);
@@ -74,6 +81,7 @@ container.register('MediaRepository', mediaRepository);
 container.register('FaceDetectionRepository', faceDetectionRepository);
 container.register('FaceClusterRepository', faceClusterRepository);
 container.register('FaceClusterMemberRepository', faceClusterMemberRepository);
+container.register('ShareableLinkRepository', shareableLinkRepository);
 
 // Register Infrastructure Services
 const s3Service = new S3Service();
@@ -144,6 +152,33 @@ const mergeClustersUseCase = new MergeClustersUseCase(
   faceClusterMemberRepository,
   groupRepository
 );
+const createShareableLinkUseCase = new CreateShareableLinkUseCase(
+  shareableLinkRepository,
+  groupRepository,
+  mediaRepository,
+  faceClusterRepository
+);
+const getSharedResourceUseCase = new GetSharedResourceUseCase(
+  shareableLinkRepository,
+  groupRepository,
+  mediaRepository,
+  faceClusterRepository,
+  faceClusterMemberRepository,
+  faceDetectionRepository,
+  s3Service
+);
+const revokeShareableLinkUseCase = new RevokeShareableLinkUseCase(
+  shareableLinkRepository,
+  groupRepository,
+  mediaRepository,
+  faceClusterRepository
+);
+const listShareableLinksUseCase = new ListShareableLinksUseCase(
+  shareableLinkRepository,
+  groupRepository,
+  mediaRepository,
+  faceClusterRepository
+);
 
 container.register('CreateGroupUseCase', createGroupUseCase);
 container.register('JoinGroupUseCase', joinGroupUseCase);
@@ -153,6 +188,10 @@ container.register('UploadMediaUseCase', uploadMediaUseCase);
 container.register('GetClustersWithSamplesUseCase', getClustersWithSamplesUseCase);
 container.register('GetClusterMediaUseCase', getClusterMediaUseCase);
 container.register('MergeClustersUseCase', mergeClustersUseCase);
+container.register('CreateShareableLinkUseCase', createShareableLinkUseCase);
+container.register('GetSharedResourceUseCase', getSharedResourceUseCase);
+container.register('RevokeShareableLinkUseCase', revokeShareableLinkUseCase);
+container.register('ListShareableLinksUseCase', listShareableLinksUseCase);
 
 // Register Controllers
 const groupController = new GroupController(
@@ -171,6 +210,9 @@ const mediaController = new MediaController(
   mediaRepository,
   groupRepository,
   s3Service,
+  faceDetectionRepository,
+  faceClusterRepository,
+  faceClusterMemberRepository,
   cacheService
 );
 const clusterController = new ClusterController(
@@ -180,6 +222,9 @@ const clusterController = new ClusterController(
   faceClusterRepository,
   faceClusterMemberRepository,
   groupRepository,
+  mediaRepository,
+  faceDetectionRepository,
+  s3Service,
   cacheService
 );
 const jobController = new JobController(
@@ -189,6 +234,12 @@ const jobController = new JobController(
 );
 const webhookController = new WebhookController(authService, emailService);
 const gdprController = new GdprController(gdprService);
+const shareController = new ShareController(
+  createShareableLinkUseCase,
+  getSharedResourceUseCase,
+  revokeShareableLinkUseCase,
+  listShareableLinksUseCase
+);
 
 container.register('GroupController', groupController);
 container.register('MediaController', mediaController);
@@ -196,5 +247,6 @@ container.register('ClusterController', clusterController);
 container.register('JobController', jobController);
 container.register('WebhookController', webhookController);
 container.register('GdprController', gdprController);
+container.register('ShareController', shareController);
 
 export { container };

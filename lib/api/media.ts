@@ -149,13 +149,13 @@ export const mediaApi = {
   // ...
 
   bulkDownload: async (groupId: string, mediaIds: string[]): Promise<void> => {
-    // Get the base URL from the API client
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+    // Get the base URL from the API client (already includes /api)
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
     const token = await (window as ClerkWindow).Clerk?.session?.getToken();
 
     // Make a fetch request that can handle blob responses
     const response = await fetch(
-      `${baseURL}/api/groups/${groupId}/media/download-bulk`,
+      `${baseURL}/groups/${groupId}/media/download-bulk`,
       {
         method: "POST",
         headers: {

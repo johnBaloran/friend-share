@@ -1,0 +1,54 @@
+Phase 1 – MVP
+Core functionality:
+
+Create and join groups
+
+Upload media (original or compressed)
+
+Auto face recognition & person-based segregation (unsupervised learning)
+
+Shareable links and shareable through email addresses to other users.
+
+Allowing other users to download/upload/delete the media.
+
+After AI face recognition, only the relevant users can be categorized. Like it should remove the noise if it exists. For example, if there is a picture and background people are also captured in the same, then AI must be able to exclude based on the relevance. The categorization of users should be based on the quantity of pictures the user is in (From max to min).
+
+The bulk download can be possible based on the user’s categories as well. At same time, multiple users’ categories can also be downloaded.
+
+Overlap is possible between pictures of more than 1 user. Hence, overlapped pictures must be shown in all the categories of users.
+
+Initial Upload (Unsupervised Grouping)
+
+dump photos into Cloud.
+
+Use the Face Grouping API → it clusters faces into groups of likely the same person.
+
+User Tagging
+
+Group creators or others tag clusters with names (“John”, “Priya”).
+
+At this point, one can optionally switch clusters into the Person Group (ID-based).
+
+Incremental Uploads
+
+New photos uploaded → run Face Detection → try Identify against existing Person Group.
+
+If no match → keep it as a new cluster.
+
+This covers “merge into existing groups or create new groups”.
+
+Tag/Untag Loop
+
+Users can correct tags → retrain/update Person Group.
+
+View media by person or all in group
+
+Auto-delete after N days + notification
+
+Storage usage tracking
+
+Payment system for storage upgrades
+
+Sharing media directly to social media platforms
+
+Download media by person or multiple persons

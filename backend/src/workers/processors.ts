@@ -197,6 +197,10 @@ export const faceDetectionWorker = new Worker<FaceDetectionJobData>(
         );
       }
 
+      // Invalidate media cache so frontend sees updated processing status
+      await cacheService.deletePattern(`media:group:${groupId}:page:*`);
+      console.log(`[Face Detection] Invalidated media cache for group ${groupId}`);
+
       await job.updateProgress(100);
       console.log(
         `[Face Detection] Job ${jobId} completed. Detected ${allFaceDetectionIds.length} faces.`
@@ -274,7 +278,7 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
       let clustersCreated = 0;
       let facesGrouped = 0;
 
-      // Create clusters for grouped faces
+      // Create clusters for grouped faces (only clusters with 2+ faces)
       for (const cluster of clusteringResult.clusters) {
         const faceClusterEntity = FaceCluster.create({
           groupId,
@@ -305,31 +309,11 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
         facesGrouped += cluster.size;
       }
 
-      // Create individual clusters for unclustered faces
-      for (const rekognitionFaceId of clusteringResult.unclusteredFaces) {
-        const detectionId = faceIdToDetectionId.get(rekognitionFaceId);
-        if (!detectionId) continue;
-
-        const faceClusterEntity = FaceCluster.create({
-          groupId,
-          appearanceCount: 1,
-          confidence: 0.5,
-          clusterName: undefined,
-        });
-
-        const faceCluster = await faceClusterRepository.create(faceClusterEntity);
-
-        const memberEntity = FaceClusterMember.create({
-          clusterId: faceCluster.id,
-          faceDetectionId: detectionId,
-          confidence: 0.5,
-        });
-
-        await faceClusterMemberRepository.create(memberEntity);
-
-        clustersCreated++;
-        facesGrouped++;
-      }
+      // Note: Unclustered faces (single appearances) are intentionally not stored
+      // to reduce noise in face grouping. Only faces appearing in 2+ photos are clustered.
+      console.log(
+        `[Face Grouping] Skipped ${clusteringResult.unclusteredFaces.length} single-appearance faces (noise reduction)`
+      );
 
       // Mark face detections as processed
       await Promise.all(
@@ -338,9 +322,10 @@ export const faceGroupingWorker = new Worker<FaceGroupingJobData>(
         )
       );
 
-      // Invalidate cluster cache so frontend sees new clusters
+      // Invalidate caches so frontend sees new clusters and updated media status
       await cacheService.delete(CacheKeys.clustersByGroup(groupId));
-      console.log(`[Face Grouping] Invalidated cluster cache for group ${groupId}`);
+      await cacheService.deletePattern(`media:group:${groupId}:page:*`);
+      console.log(`[Face Grouping] Invalidated cluster and media cache for group ${groupId}`);
 
       await job.updateProgress(100);
 

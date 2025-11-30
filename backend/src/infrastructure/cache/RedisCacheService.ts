@@ -2,11 +2,21 @@ import Redis from 'ioredis';
 import { env } from '../../config/env.js';
 
 export class RedisCacheService {
-  private client: Redis;
+  private client: Redis | null;
   private readonly defaultTTL = 3600; // 1 hour in seconds
+  private readonly enabled: boolean;
 
   constructor() {
-    this.client = new Redis(env.get('REDIS_URL'), {
+    const redisUrl = env.get('REDIS_URL');
+    this.enabled = !!redisUrl;
+
+    if (!this.enabled) {
+      console.log('⚠️  Redis cache disabled (no REDIS_URL configured)');
+      this.client = null;
+      return;
+    }
+
+    this.client = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => {
         const delay = Math.min(times * 50, 2000);
@@ -27,6 +37,8 @@ export class RedisCacheService {
    * Get a value from cache
    */
   async get<T>(key: string): Promise<T | null> {
+    if (!this.enabled || !this.client) return null;
+
     try {
       const value = await this.client.get(key);
       if (!value) return null;
@@ -42,6 +54,8 @@ export class RedisCacheService {
    * Set a value in cache with optional TTL
    */
   async set(key: string, value: any, ttl?: number): Promise<void> {
+    if (!this.enabled || !this.client) return;
+
     try {
       const serialized = JSON.stringify(value);
       const expiryTime = ttl || this.defaultTTL;
@@ -56,6 +70,8 @@ export class RedisCacheService {
    * Delete a value from cache
    */
   async delete(key: string): Promise<void> {
+    if (!this.enabled || !this.client) return;
+
     try {
       await this.client.del(key);
     } catch (error) {
@@ -67,6 +83,8 @@ export class RedisCacheService {
    * Delete multiple keys matching a pattern
    */
   async deletePattern(pattern: string): Promise<void> {
+    if (!this.enabled || !this.client) return;
+
     try {
       const keys = await this.client.keys(pattern);
       if (keys.length > 0) {
@@ -81,6 +99,8 @@ export class RedisCacheService {
    * Check if a key exists
    */
   async exists(key: string): Promise<boolean> {
+    if (!this.enabled || !this.client) return false;
+
     try {
       const result = await this.client.exists(key);
       return result === 1;
@@ -94,6 +114,8 @@ export class RedisCacheService {
    * Increment a counter
    */
   async increment(key: string, ttl?: number): Promise<number> {
+    if (!this.enabled || !this.client) return 0;
+
     try {
       const value = await this.client.incr(key);
       if (ttl) {
@@ -110,6 +132,8 @@ export class RedisCacheService {
    * Get multiple values at once
    */
   async mget<T>(keys: string[]): Promise<(T | null)[]> {
+    if (!this.enabled || !this.client) return keys.map(() => null);
+
     try {
       if (keys.length === 0) return [];
 
@@ -152,7 +176,9 @@ export class RedisCacheService {
    * Disconnect Redis client
    */
   async disconnect(): Promise<void> {
-    await this.client.quit();
+    if (this.client) {
+      await this.client.quit();
+    }
   }
 }
 

@@ -36,6 +36,7 @@ export interface Group {
   storageUsed: number;
   autoDeleteDays: number;
   rekognitionCollectionId?: string;
+  mediaCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

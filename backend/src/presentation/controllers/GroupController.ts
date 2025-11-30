@@ -54,8 +54,10 @@ export class GroupController {
       userId,
     });
 
-    // Invalidate user's group list cache (including all paginated keys)
-    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser(userId)}*`);
+    // Invalidate caches
+    await this.cacheService.deletePattern(`${CacheKeys.groupsByUser(userId)}*`); // New member's group list
+    await this.cacheService.deletePattern(`${CacheKeys.group(group.id)}*`); // Group cache for all members
+    await this.cacheService.delete(CacheKeys.groupMembers(group.id)); // Group members cache
 
     res.json({
       success: true,
@@ -81,9 +83,20 @@ export class GroupController {
       result.data.map(group => this.populateGroupMembers(group))
     );
 
+    // Add media count for each group
+    const groupsWithMediaCount = await Promise.all(
+      groupsWithUsers.map(async (group) => {
+        const mediaCount = await this.mediaRepository.countByGroupId(group.id);
+        return {
+          ...(typeof group.toJSON === 'function' ? group.toJSON() : group),
+          mediaCount,
+        };
+      })
+    );
+
     res.json({
       success: true,
-      data: groupsWithUsers,
+      data: groupsWithMediaCount,
       pagination: result.pagination,
     });
   });

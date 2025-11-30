@@ -106,6 +106,16 @@ export const clustersApi = {
   },
 
   /**
+   * Remove a specific face from a cluster
+   * @param clusterId - Cluster ID
+   * @param faceDetectionId - Face detection ID to remove
+   */
+  removeFaceFromCluster: async (clusterId: string, faceDetectionId: string): Promise<{ clusterDeleted: boolean; remainingFaces?: number }> => {
+    const response = await api.delete<{ success: boolean; clusterDeleted: boolean; remainingFaces?: number }>(`/clusters/${clusterId}/faces/${faceDetectionId}`);
+    return { clusterDeleted: response.clusterDeleted, remainingFaces: response.remainingFaces };
+  },
+
+  /**
    * Merge two clusters
    * @param sourceClusterId - Cluster to merge FROM (will be deleted)
    * @param targetClusterId - Cluster to merge INTO (will be kept)

@@ -36,7 +36,7 @@ export const joinGroupSchema = z.object({
   body: z.object({
     inviteCode: z
       .string()
-      .length(6, 'Invite code must be exactly 6 characters')
+      .length(8, 'Invite code must be exactly 8 characters')
       .regex(/^[A-Z0-9]+$/, 'Invite code must contain only uppercase letters and numbers'),
   }),
 });

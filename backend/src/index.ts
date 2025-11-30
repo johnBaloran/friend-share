@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { clerkMiddleware } from '@clerk/express';
+import rateLimit from 'express-rate-limit';
 
 import { env } from './config/env.js';
 import { initSentry } from './config/sentry.js';
@@ -11,8 +12,6 @@ import { setupExpressErrorHandler } from '@sentry/node';
 import { database } from './infrastructure/database/mongoose/connection.js';
 import routes from './presentation/routes/index.js';
 import { errorHandler } from './presentation/middleware/errorHandler.js';
-import { requireAuthJson } from './presentation/middleware/clerkAuth.js';
-import { apiLimiter } from './presentation/middleware/rateLimiter.js';
 import { sanitizeBody } from './presentation/middleware/validate.js';
 
 // Initialize Sentry FIRST (before any other imports or middleware)
@@ -56,11 +55,20 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// Apply rate limiting to all API routes
-app.use(env.get('API_PREFIX'), apiLimiter);
+// Apply rate limiting to all API routes (increased for polling)
+// Note: Frontend polls media/clusters every 5s while processing
+// 2 requests × 12/min × 15min = 360 requests, so increased to 500
+const lenientApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Increased from 100 to support polling
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(env.get('API_PREFIX'), lenientApiLimiter);
 
-// Protected API Routes
-app.use(env.get('API_PREFIX'), requireAuthJson, routes);
+// Mount all routes (public routes are handled within the router)
+// Note: Public routes (like /public/share/:token) don't require auth
+app.use(env.get('API_PREFIX'), routes);
 
 // 404 Handler
 app.use((_req, res) => {

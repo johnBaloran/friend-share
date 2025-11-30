@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, Plus } from "lucide-react";
+import { Users, Calendar, Plus, Image } from "lucide-react";
 import { groupsApi, Group } from "@/lib/api/groups";
 
 export default function DashboardPage() {
@@ -50,10 +50,6 @@ export default function DashboardPage() {
 
   const handleGroupClick = (groupId: string): void => {
     router.push(`/groups/${groupId}`);
-  };
-
-  const formatStorageUsed = (bytes: number): string => {
-    return `${Math.round(bytes / 1024 / 1024)} MB`;
   };
 
   if (loading) {
@@ -116,23 +112,13 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Storage used</span>
+                      <div className="flex items-center text-gray-600">
+                        <Image className="h-4 w-4 mr-1" />
+                        Photos
+                      </div>
                       <span className="font-medium">
-                        {formatStorageUsed(group.storageUsed)} /{" "}
-                        {formatStorageUsed(group.storageLimit)}
+                        {group.mediaCount || 0}
                       </span>
-                    </div>
-
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(
-                            (group.storageUsed / group.storageLimit) * 100,
-                            100
-                          )}%`,
-                        }}
-                      />
                     </div>
 
                     <div className="flex items-center justify-between text-sm text-gray-500">
